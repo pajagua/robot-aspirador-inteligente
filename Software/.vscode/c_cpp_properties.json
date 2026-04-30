@@ -8,8 +8,8 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/tikip/Desktop/Roomba/robot-aspirador-inteligente/Software/include",
-                "C:/Users/tikip/Desktop/Roomba/robot-aspirador-inteligente/Software/src",
+                "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/include",
+                "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -247,8 +247,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/tikip/Documents/PlatformIO/Projects/Roomba_P3/include",
-                    "C:/Users/tikip/Documents/PlatformIO/Projects/Roomba_P3/src",
+                    "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/include",
+                    "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -490,6 +490,7 @@
                 "ARDUINO_USB_MODE=1",
                 "ARDUINO_RUNNING_CORE=1",
                 "ARDUINO_EVENT_RUNNING_CORE=1",
+                "BOARD_HAS_PSRAM",
                 "HAVE_CONFIG_H",
                 "MBEDTLS_CONFIG_FILE=\"mbedtls/esp_config.h\"",
                 "UNITY_INCLUDE_CONFIG_H",
@@ -511,6 +512,7 @@
             "cppStandard": "gnu++11",
             "compilerPath": "C:/Users/tikip/.platformio/packages/toolchain-xtensa-esp32s3/bin/xtensa-esp32s3-elf-gcc.exe",
             "compilerArgs": [
+                "-mfix-esp32-psram-cache-issue",
                 "-mlongcalls",
                 ""
             ]
