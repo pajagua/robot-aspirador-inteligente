@@ -35,14 +35,11 @@ static uint32_t tiempo_estado = 0;
 
 void setup() {
     Serial.begin(BAUD_RATE);
-    Serial.println("=== Roomba ESP32-S3 ===");
-    Serial.println("Inicializando...");
+    Serial.println("Inicializando ");
 
     // LED de estado
     pinMode(PIN_LED_VERDE, OUTPUT);
     digitalWrite(PIN_LED_VERDE, LOW);
-    pinMode(PIN_LED_ROJO, OUTPUT);
-    digitalWrite(PIN_LED_ROJO, LOW);
 
     // Inicializar modulos
     motors_init();
@@ -52,10 +49,8 @@ void setup() {
     // Parpadeo de confirmacion
     for (int i = 0; i < 3; i++) {
         digitalWrite(PIN_LED_VERDE, HIGH);
-        digitalWrite(PIN_LED_ROJO, HIGH);
         delay(200);
         digitalWrite(PIN_LED_VERDE, LOW);
-        digitalWrite(PIN_LED_ROJO, LOW);
         delay(200);
     }
 
@@ -128,7 +123,6 @@ void loop() {
             } else {
                 // Camino libre
                 motors_drive(VEL_AVANCE, 0);
-                digitalWrite(PIN_LED_ROJO, LOW);
             }
             break;
 

@@ -1,23 +1,8 @@
-// pines y macros
+
 #pragma once
-
-// =====================================================
-//  config.h — Mapa de pines y macros del sistema
-//  PCB: Roomba ESP32-S3 Custom
-//  MCU: ESP32-S3-WROOM-1-N8R8
-//  NOTA: Todos los pines son GPIO del ESP32-S3
-// =====================================================
-
-// --- FUENTES DE ALIMENTACION (referencia, no son pines) ---
-// Bateria 12V  → TPS54202 Step-Down → 5V (Fuente5V)
-// Fuente5V     → LM1117-3.3         → 3.3V (Fuente3V, alimenta el ESP)
-
 // =====================================================
 //  DRIVER DE MOTORES — TB6612FNG
 // =====================================================
-// Motor A = Motor Izquierdo (J3)
-// Motor B = Motor Derecho   (J4)
-
 #define PIN_STBY        4  // io4_espi → STBY: Encendido/Reposo del Driver
                              // HIGH = activo | LOW = standby (ahorra energia)
 
@@ -46,8 +31,7 @@
 // =====================================================
 //  SENSORES ULTRASONICOS — HC-SR04 (x3)
 // =====================================================
-// Echo reducido de 5V a 3.3V con divisor resistivo (R9/R10, R13/R14, R11/R12)
-// Trigger: salida directa del ESP (3.3V es suficiente para el sensor)
+
 
 #define PIN_TRIGGER_IZQ     10   // io10_espi → trigger1 (J5 Left Ultrasonic)
 #define PIN_ECHO_IZQ        11   // io11_espi → echo1
@@ -61,8 +45,7 @@
 // =====================================================
 //  LEDS DE ESTADO
 // =====================================================
-#define PIN_LED_VERDE       1  // io1_espi → LED Verde (J10) — Indica que el sistema está encendido y funcionando
-#define PIN_LED_ROJO        2  // io2_espi → LED Rojo (J10) — Indica error o estado crítico
+#define PIN_LED_VERDE       2  // io1_espi → LED Verde (J10) — Indica que el sistema está encendido y funcionando
 
 // =====================================================
 //  UART DE DEBUG — J2-UART1
@@ -75,7 +58,6 @@
 // =====================================================
 // GPIO19 = USB D-  (USB_N)
 // GPIO20 = USB D+  (USB_P)
-// Conectados al conector USB-C J11 via UJ20-C-H-G-SMT
 
 // =====================================================
 //  CRISTAL EXTERNO
