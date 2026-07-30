@@ -8,8 +8,8 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/include",
-                "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/src",
+                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/include",
+                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -247,8 +247,8 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/include",
-                    "C:/Users/tikip/Desktop/ROOMBA/robot-aspirador-inteligente/Software/src",
+                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/include",
+                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
