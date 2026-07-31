@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
+    <title>Roomba ESP32-S3 Control & Radar</title>
+    <!-- Librería NippleJS para los Joysticks -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.0/nipplejs.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #121214;
+            --panel-bg: #1e1e24;
+            --accent-color: #0078d4;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --text-color: #ffffff;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            min-height: 100vh;
+            padding: 15px;
+            touch-action: none;
+        }
+        .panel-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--panel-bg);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid #2e2e38;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .header h2 {
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .conexion-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+        .ip-input {
+            background: #2a2a32;
+            border: 1px solid #3e3e48;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            width: 120px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            background: var(--danger-color);
+        }
+        .badge.conectado {
+            background: var(--success-color);
+        }
+
+        /* --- RADAR ULTRASÓNICO --- */
+        .radar-title {
+            font-size: 0.75rem;
+            color: #aaa;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: block;
+        }
+        #radarCanvas {
+            background: #0d0d11;
+            border-radius: 8px;
+            border: 1px solid #333340;
+            display: block;
+            margin: 0 auto;
+        }
+        /* Controles de Simulación para Live Server */
+        .sliders-simulador {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed #333340;
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+        .slider-group input[type="range"] {
+            width: 100%;
+            margin-top: 3px;
+            cursor: pointer;
+        }
+
+        /* --- SELECTOR DE MODOS --- */
+        .modos-container {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-modo {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #3e3e48;
+            border-radius: 8px;
+            background: var(--panel-bg);
+            color: #aaa;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modo.activo {
+            border-color: var(--accent-color);
+            background: rgba(0, 120, 212, 0.15);
+            color: #fff;
+        }
+
+        /* --- DOS JOYSTICKS (TANQUE / SPLIT-STICK) --- */
+        .joysticks-grid {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            max-width: 420px;
+            padding: 5px 0;
+        }
+        .joy-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+        .joy-box {
+            width: 130px;
+            height: 130px;
+            position: relative;
+            background: radial-gradient(circle, #2a2a32 0%, var(--panel-bg) 70%);
+            border-radius: 50%;
+            border: 2px solid #3e3e48;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        /* --- ACTUADORES --- */
+        .actuadores-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-toggle {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #3a3a46;
+            color: #fff;
+        }
+        .btn-toggle.on {
+            background: var(--success-color);
+        }
+
+        /* --- CONSOLA --- */
+        .console-box {
+            background: #08080a;
+            border: 1px solid #2e2e38;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.75rem;
+            color: #00ff66;
+            padding: 8px;
+            text-align: left;
+            height: 40px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- CABECERA -->
+    <div class="panel-box header">
+        <h2>ROOMBA ESP32-S3</h2>
+        <div class="conexion-box">
+            <span>IP:</span>
+            <input type="text" id="ip-esp32" class="ip-input" value="192.168.4.1">
+            <span id="badge-ws" class="badge">Desconectado</span>
+        </div>
+    </div>
+
+    <!-- RADAR ULTRASÓNICO (MAPEADO VISUAL) -->
+    <div class="panel-box">
+        <span class="radar-title">RADAR FRONTAL (HC-SR04)</span>
+        <canvas id="radarCanvas" width="320" height="155"></canvas>
+        
+        <!-- Controles de simulación para que pruebes en Live Server -->
+        <div class="sliders-simulador">
+            <div class="slider-group">
+                <span>IZQ: <b id="val-izq">65</b> cm</span>
+                <input type="range" id="sim-izq" min="2" max="100" value="65" oninput="actualizarSimulacion()">
+            </div>
+            <div class="slider-group">
+                <span>CTR: <b id="val-ctr">15</b> cm</span>
+                <input type="range" id="sim-ctr" min="2" max="100" value="15" oninput="actualizarSimulacion()">
+            </div>
+            <div class="slider-group">
+                <span>DER: <b id="val-der">35</b> cm</span>
+                <input type="range" id="sim-der" min="2" max="100" value="35" oninput="actualizarSimulacion()">
+            </div>
+        </div>
+    </div>
+
+    <!-- SELECTOR DE MODOS -->
+    <div class="panel-box modos-container">
+        <button id="modo-manual" class="btn-modo activo" onclick="setModo('MANUAL')">MANUAL</button>
+        <button id="modo-auto" class="btn-modo" onclick="setModo('AUTO')">AUTÓNOMO</button>
+    </div>
+
+    <!-- DOS JOYSTICKS: LINEAL (IZQ) Y ANGULAR (DER) -->
+    <div class="joysticks-grid">
+        <div class="joy-container">
+            <span>VELOCIDAD (AD / AT)</span>
+            <div id="joy-lineal" class="joy-box"></div>
+        </div>
+        <div class="joy-container">
+            <span>DIRECCIÓN (IZQ / DER)</span>
+            <div id="joy-angular" class="joy-box"></div>
+        </div>
+    </div>
+
+    <!-- BOTONES DE ACTUADORES -->
+    <div class="panel-box actuadores-grid">
+        <div>
+            <span style="font-size: 0.8rem; color:#aaa; font-weight: bold;">SUCCIÓN</span>
+            <button id="btn-succion" class="btn-toggle" onclick="toggleSuccion()">OFF</button>
+        </div>
+        <div>
+            <span style="font-size: 0.8rem; color:#aaa; font-weight: bold;">CEPILLO</span>
+            <button id="btn-cepillo" class="btn-toggle" onclick="toggleCepillo()">OFF</button>
+        </div>
+    </div>
+
+    <!-- CONSOLA DE SALIDA -->
+    <div class="panel-box console-box">
+        <span id="log-out">> Listo para simulación en Live Server</span>
+    </div>
+
+    <script>
+        // --- 1. DIBUJO DEL RADAR ULTRASÓNICO (CANVAS 2D) ---
+        const canvas = document.getElementById("radarCanvas");
+        const ctx = canvas.getContext("2d");
+
+        function dibujarRadar(distIzq, distCentro, distDer) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const origX = canvas.width / 2;
+            const origY = canvas.height - 15; // Origen abajo en el centro
+            const maxDist = 100; // 100 cm como fondo máximo del radar
+
+            // 1. Dibujar los arcos de distancia (30cm, 60cm, 90cm)
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = "#22222e";
+            ctx.fillStyle = "#555566";
+            ctx.font = "10px Segoe UI";
+
+            for (let cm = 30; cm <= 90; cm += 30) {
+                const r = (cm / maxDist) * (canvas.height - 30);
+                ctx.beginPath();
+                ctx.arc(origX, origY, r, Math.PI, 0);
+                ctx.stroke();
+                // Etiqueta en centímetros en el borde del arco
+                ctx.fillText(cm + "cm", origX + 4, origY - r + 10);
+            }
+
+            // 2. Dibujar líneas de referencia angulares tenue
+            [-40, 0, 40].forEach(ang => {
+                const angRad = (ang - 90) * (Math.PI / 180);
+                const rMax = canvas.height - 30;
+                ctx.beginPath();
+                ctx.moveTo(origX, origY);
+                ctx.lineTo(origX + Math.cos(angRad) * rMax, origY + Math.sin(angRad) * rMax);
+                ctx.strokeStyle = "#1a1a24";
+                ctx.stroke();
+            });
+
+            // 3. Función auxiliar para dibujar cada haz de sonido
+            function dibujarHaz(distancia, anguloGrados, etiqueta) {
+                const angRad = (anguloGrados - 90) * (Math.PI / 180);
+                const distClamped = Math.min(Math.max(distancia, 0), maxDist);
+                const largoPx = (distClamped / maxDist) * (canvas.height - 30);
+
+                const targetX = origX + Math.cos(angRad) * largoPx;
+                const targetY = origY + Math.sin(angRad) * largoPx;
+
+                // Color dinámico según peligro (< 20cm: Rojo, < 40cm: Amarillo, >= 40cm: Verde)
+                let color = "#28a745"; // Verde
+                if (distClamped < 20) color = "#dc3545"; // Rojo
+                else if (distClamped < 40) color = "#ffc107"; // Amarillo
+
+                // Dibujar rayo
+                ctx.beginPath();
+                ctx.moveTo(origX, origY);
+                ctx.lineTo(targetX, targetY);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 5;
+                ctx.lineCap = "round";
+                ctx.stroke();
+
+                // Dibujar punto del obstáculo
+                ctx.beginPath();
+                ctx.arc(targetX, targetY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = color;
+                ctx.fill();
+
+                // Dibujar texto con la distancia en cm cerca del punto
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 11px Segoe UI";
+                ctx.fillText(Math.round(distClamped) + "cm", targetX - 14, targetY - 8);
+            }
+
+            // Dibujamos los 3 sensores con sus ángulos reales del chasis
+            dibujarHaz(distIzq, -40, "IZQ");
+            dibujarHaz(distCentro, 0, "CTR");
+            dibujarHaz(distDer, 40, "DER");
+
+            // 4. Dibujar el robot en el origen (semicírculo azul inferior)
+            ctx.beginPath();
+            ctx.arc(origX, origY, 14, Math.PI, 0);
+            ctx.fillStyle = "#0078d4";
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "#ffffff";
+            ctx.stroke();
+        }
+
+        // Función conectada a los deslizadores para simular en Live Server
+        function actualizarSimulacion() {
+            const izq = parseFloat(document.getElementById("sim-izq").value);
+            const ctr = parseFloat(document.getElementById("sim-ctr").value);
+            const der = parseFloat(document.getElementById("sim-der").value);
+
+            document.getElementById("val-izq").textContent = izq;
+            document.getElementById("val-ctr").textContent = ctr;
+            document.getElementById("val-der").textContent = der;
+
+            dibujarRadar(izq, ctr, der);
+        }
+
+        // --- 2. COMUNICACIÓN WEBSOCKET Y SIMULADOR ---
+        let ws = null;
+        let conectado = false;
+
+        function conectarWS() {
+            const ip = window.location.hostname === "127.0.0.1" || window.location.hostname === "" 
+                ? document.getElementById("ip-esp32").value 
+                : window.location.hostname;
+
+            const url = `ws://${ip}/ws`;
+            try {
+                ws = new WebSocket(url);
+                ws.onopen = () => {
+                    conectado = true;
+                    document.getElementById("badge-ws").textContent = "Conectado";
+                    document.getElementById("badge-ws").className = "badge conectado";
+                    log("WS Conectado a " + url);
+                };
+                // Si el ESP32 nos manda datos del radar: {"radar":[65, 15, 35]}
+                ws.onmessage = (evt) => {
+                    try {
+                        const data = JSON.parse(evt.data);
+                        if (data.radar && data.radar.length === 3) {
+                            dibujarRadar(data.radar[0], data.radar[1], data.radar[2]);
+                            // Actualizar también los sliders por si acaso
+                            document.getElementById("sim-izq").value = data.radar[0];
+                            document.getElementById("sim-ctr").value = data.radar[1];
+                            document.getElementById("sim-der").value = data.radar[2];
+                            actualizarSimulacion();
+                        }
+                    } catch(e) {}
+                };
+                ws.onclose = () => {
+                    conectado = false;
+                    document.getElementById("badge-ws").textContent = "Desconectado";
+                    document.getElementById("badge-ws").className = "badge";
+                };
+            } catch (e) {
+                log("Modo Simulación activo");
+            }
+        }
+
+        function enviarJSON(datos) {
+            log("SEND: " + JSON.stringify(datos));
+            if (conectado && ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(datos));
+            }
+        }
+
+        function log(texto) {
+            document.getElementById("log-out").textContent = "> " + texto;
+        }
+
+        // --- 3. ACTUADORES Y MODOS ---
+        let succionEstado = false;
+        let cepilloEstado = false;
+
+        function toggleSuccion() {
+            succionEstado = !succionEstado;
+            const btn = document.getElementById("btn-succion");
+            btn.textContent = succionEstado ? "ON (100%)" : "OFF";
+            btn.className = succionEstado ? "btn-toggle on" : "btn-toggle";
+            enviarJSON({ cmd: "SUCCION", val: succionEstado ? 100 : 0 });
+        }
+
+        function toggleCepillo() {
+            cepilloEstado = !cepilloEstado;
+            const btn = document.getElementById("btn-cepillo");
+            btn.textContent = cepilloEstado ? "ON" : "OFF";
+            btn.className = cepilloEstado ? "btn-toggle on" : "btn-toggle";
+            enviarJSON({ cmd: "CEPILLO", val: cepilloEstado ? 1 : 0 });
+        }
+
+        function setModo(nuevoModo) {
+            document.getElementById("modo-manual").className = "btn-modo" + (nuevoModo === 'MANUAL' ? ' activo' : '');
+            document.getElementById("modo-auto").className = "btn-modo" + (nuevoModo === 'AUTO' ? ' activo' : '');
+            enviarJSON({ cmd: "MODO", val: nuevoModo });
+        }
+
+        // --- 4. JOYSTICKS INDEPENDIENTES (VELOCIDAD Y DIRECCIÓN) ---
+        let velLineal = 0;
+        let velAngular = 0;
+        let ultimoEnvio = 0;
+
+        const joyLin = nipplejs.create({
+            zone: document.getElementById('joy-lineal'),
+            mode: 'static', position: { left: '50%', top: '50%' },
+            color: '#28a745', size: 100, lockY: true
+        });
+
+        const joyAng = nipplejs.create({
+            zone: document.getElementById('joy-angular'),
+            mode: 'static', position: { left: '50%', top: '50%' },
+            color: '#0078d4', size: 100, lockX: true
+        });
+
+        function procesarEnvioDrive() {
+            const ahora = Date.now();
+            if (ahora - ultimoEnvio < 100) return;
+            enviarJSON({ cmd: "DRIVE", lin: velLineal, ang: velAngular });
+            ultimoEnvio = ahora;
+        }
+
+        joyLin.on('move', (evt, data) => {
+            if (data && data.vector) {
+                velLineal = Math.round(data.vector.y * 100);
+                procesarEnvioDrive();
+            }
+        });
+        joyLin.on('end', () => { velLineal = 0; enviarJSON({ cmd: "DRIVE", lin: 0, ang: velAngular }); });
+
+        joyAng.on('move', (evt, data) => {
+            if (data && data.vector) {
+                velAngular = Math.round(data.vector.x * 100);
+                procesarEnvioDrive();
+            }
+        });
+        joyAng.on('end', () => { velAngular = 0; enviarJSON({ cmd: "DRIVE", lin: velLineal, ang: 0 }); });
+
+        // Inicialización al abrir la ventana
+        window.addEventListener("load", () => {
+            conectarWS();
+            actualizarSimulacion(); // Dibuja el radar inicial con 65cm, 15cm, 35cm
+        });
+    </script>
+</body>
+</html>
