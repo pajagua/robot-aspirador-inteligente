@@ -1,162 +1,149 @@
+// =====================================================
+//  main.cpp — Entry point del firmware Roomba
+//  ESP32-S3-WROOM-1-N8R8
+// =====================================================
 #include <Arduino.h>
 #include "config.h"
 #include "motors.h"
 #include "ultrasonic.h"
 #include "suction.h"
+#include "brush.h"
+#include "navigation.h"
+#include "web.h"
 
-static bool ultrasonic_obstacle(const UltrasonicReading sensores[], int sensor, float umbral) {
-    return sensores[sensor].valido && sensores[sensor].distancia_cm < umbral;
+#define LOOP_PERIODO_MS     10      // control a 100 Hz
+#define DEBUG_PERIODO_MS    500
+
+static uint32_t _t_mision = 0;      // inicio de la mision (0 = sin mision)
+
+// -----------------------------------------------------------
+
+static void actualizar_mision() {
+    // La mision corre mientras algun actuador de limpieza este encendido
+    bool limpiando = succion_get() > 0 || cepillo_get() > 0;
+    if (limpiando && !_t_mision) _t_mision = millis();
+    if (!limpiando) _t_mision = 0;
 }
 
-// =====================================================
-//  main.cpp — Entry point del firmware Roomba
-//  ESP32-S3-WROOM-1-N8R8
-// =====================================================
+static void procesar_comando(const Comando &c) {
+    switch (c.tipo) {
+        case CMD_DRIVE:
+            nav_drive_manual(c.a, c.b);
+            break;
+        case CMD_SUCCION:
+            succion_set(constrain(c.a, 0, 100));
+            break;
+        case CMD_CEPILLO:
+            cepillo_set(constrain(c.a, 0, 100));
+            break;
+        case CMD_MODO:
+            nav_set_modo((ModoRobot)c.a);
+            Serial.printf("Modo: %s\n", nav_modo_nombre((ModoRobot)c.a));
+            break;
+        case CMD_CONFIG:
+            if (c.a >= 0) nav_set_umbral(c.a);
+            if (c.b >= 0) nav_set_velocidad(c.b);
+            break;
+        case CMD_STOP:
+            nav_parada_emergencia();
+            Serial.println("PARADA DE EMERGENCIA");
+            break;
+    }
+    actualizar_mision();
+}
 
-// --- Estado de la maquina ---
-typedef enum {
-    STATE_INIT,
-    STATE_IDLE,
-    STATE_CLEANING,
-    STATE_AVOID_LEFT,
-    STATE_AVOID_RIGHT,
-    STATE_BACK_UP,
-} RoombaState;
+static void procesar_serial() {
+    // Comandos de depuracion por Serial
+    if (!Serial.available()) return;
+    switch (Serial.read()) {
+        case 's': procesar_comando({ CMD_MODO, MODO_AUTO, 0 });    break;
+        case 'p': procesar_comando({ CMD_MODO, MODO_PAREDES, 0 }); break;
+        case 'e': procesar_comando({ CMD_MODO, MODO_ESPIRAL, 0 }); break;
+        case 'x': procesar_comando({ CMD_STOP, 0, 0 });            break;
+    }
+}
 
-static RoombaState estado = STATE_INIT;
-static uint32_t tiempo_estado = 0;
+static void enviar_telemetria() {
+    UltrasonicReading izq = ultrasonic_get(SENSOR_IZQ);
+    UltrasonicReading ctr = ultrasonic_get(SENSOR_CENTRO);
+    UltrasonicReading der = ultrasonic_get(SENSOR_DER);
+    uint32_t mision_s = _t_mision ? (millis() - _t_mision) / 1000 : 0;
 
-#define OBSTACULO_CM        20.0f   // Distancia minima para considerar obstaculo
-#define VEL_AVANCE          60      // Velocidad de avance normal
-#define TIEMPO_RETROCESO    600     // ms de retroceso al detectar obstaculo
-#define TIEMPO_GIRO         400     // ms de giro
+    char buf[256];
+    int n = snprintf(buf, sizeof(buf),
+        "{\"radar\":[%.1f,%.1f,%.1f],\"estado\":\"%s\",\"modo\":\"%s\","
+        "\"suc\":%u,\"cep\":%u,\"rpm\":%u,\"mis\":%lu,\"umbral\":%u,\"vel\":%u}",
+        izq.valido ? izq.distancia_cm : -1.0f,
+        ctr.valido ? ctr.distancia_cm : -1.0f,
+        der.valido ? der.distancia_cm : -1.0f,
+        nav_estado_texto(), nav_modo_nombre(nav_get_modo()),
+        succion_get(), cepillo_get(), succion_rpm(), (unsigned long)mision_s,
+        nav_get_umbral(), nav_get_velocidad());
+    if (n > 0 && n < (int)sizeof(buf)) web_enviar_telemetria(buf, n);
+}
+
+static void actualizar_led(uint32_t ahora) {
+    // Fijo = cliente conectado | parpadeo lento = esperando conexion
+    bool on = web_clientes() > 0 || (ahora / 500) % 2;
+    digitalWrite(PIN_LED_VERDE, on);
+}
 
 // -----------------------------------------------------------
 
 void setup() {
-    Serial.begin(BAUD_RATE);
-    Serial.println("Inicializando ");
+    // Actuadores primero: dejar los PWM en 0 lo antes posible tras el reset
+    succion_init();
+    cepillo_init();
+    motors_init();
 
-    // LED de estado
+    Serial.begin(BAUD_RATE);
+    Serial.println("Inicializando...");
+
     pinMode(PIN_LED_VERDE, OUTPUT);
     digitalWrite(PIN_LED_VERDE, LOW);
 
-    // Inicializar modulos
-    motors_init();
     ultrasonic_init();
-    succion_init();
+    nav_init();
+    web_init();
+    randomSeed(esp_random());
 
-    // Parpadeo de confirmacion
-    for (int i = 0; i < 3; i++) {
-        digitalWrite(PIN_LED_VERDE, HIGH);
-        delay(200);
-        digitalWrite(PIN_LED_VERDE, LOW);
-        delay(200);
-    }
-
-    estado = STATE_IDLE;
-    Serial.println("Listo. Enviando 's' por Serial para iniciar limpieza.");
+    Serial.println("Listo. Serial: 's' auto | 'p' paredes | 'e' espiral | 'x' stop");
 }
 
-// -----------------------------------------------------------
-
 void loop() {
-    // Comando por Serial para control basico
-    if (Serial.available()) {
-        char cmd = Serial.read();
-        switch (cmd) {
-            case 's':
-                estado = STATE_CLEANING;
-                motors_wake();
-                succion_on();
-                Serial.println("Limpieza iniciada");
-                break;
-            case 'x':
-                estado = STATE_IDLE;
-                motors_brake();
-                motors_standby();
-                succion_off();
-                Serial.println("Detenido");
-                break;
-        }
-    }
-
-    // Leer sensores
-    UltrasonicReading sensores[SENSOR_COUNT];
-    ultrasonic_read_all(sensores);
-
-    // Debug de distancias
-    if (millis() % 500 < 50) {
-        Serial.printf("IZQ: %.1f cm | CTR: %.1f cm | DER: %.1f cm\n",
-            sensores[SENSOR_IZQ].distancia_cm,
-            sensores[SENSOR_CENTRO].distancia_cm,
-            sensores[SENSOR_DER].distancia_cm
-        );
-    }
-
-    // Maquina de estados
+    static uint32_t t_loop = 0, t_tele = 0, t_debug = 0, t_mant = 0;
     uint32_t ahora = millis();
 
-    switch (estado) {
+    // Sensores: no bloqueante, se llama lo mas seguido posible
+    ultrasonic_update();
 
-        case STATE_IDLE:
-            motors_brake();
-            succion_off();
-            break;
+    if (ahora - t_loop < LOOP_PERIODO_MS) return;
+    t_loop = ahora;
 
-        case STATE_CLEANING:
-            // Avanzar mientras no haya obstaculos
-            if (ultrasonic_obstacle(sensores, SENSOR_CENTRO, OBSTACULO_CM) ||
-                ultrasonic_obstacle(sensores, SENSOR_IZQ, OBSTACULO_CM * 0.8f)) {
-                // Obstaculo al frente/izquierda → retroceder y girar a la derecha
-                estado = STATE_BACK_UP;
-                tiempo_estado = ahora;
-                motors_drive(-VEL_AVANCE, 0);
-                Serial.println("Obstaculo detectado — retrocediendo");
+    Comando cmd;
+    while (web_recibir(&cmd)) procesar_comando(cmd);
+    procesar_serial();
 
-            } else if (ultrasonic_obstacle(sensores, SENSOR_DER, OBSTACULO_CM * 0.8f)) {
-                // Obstaculo a la derecha → girar izquierda
-                estado = STATE_AVOID_LEFT;
-                tiempo_estado = ahora;
-                motors_drive(0, -40);
+    nav_update();
+    actualizar_mision();   // un modo autonomo puede encender los actuadores
+    actualizar_led(ahora);
 
-            } else {
-                // Camino libre
-                motors_drive(VEL_AVANCE, 0);
-            }
-            break;
-
-        case STATE_BACK_UP:
-            if (ahora - tiempo_estado > TIEMPO_RETROCESO) {
-                // Decidir giro segun sensor izquierdo
-                if (sensores[SENSOR_IZQ].valido &&
-                    sensores[SENSOR_IZQ].distancia_cm < OBSTACULO_CM) {
-                    estado = STATE_AVOID_RIGHT;
-                    motors_drive(0, 50);   // girar derecha
-                } else {
-                    estado = STATE_AVOID_LEFT;
-                    motors_drive(0, -50);  // girar izquierda
-                }
-                tiempo_estado = ahora;
-            }
-            break;
-
-        case STATE_AVOID_LEFT:
-            if (ahora - tiempo_estado > TIEMPO_GIRO) {
-                estado = STATE_CLEANING;
-            }
-            break;
-
-        case STATE_AVOID_RIGHT:
-            if (ahora - tiempo_estado > TIEMPO_GIRO) {
-                estado = STATE_CLEANING;
-            }
-            break;
-
-        default:
-            estado = STATE_IDLE;
-            break;
+    if (ahora - t_tele >= TELEMETRIA_PERIODO_MS) {
+        t_tele = ahora;
+        enviar_telemetria();
     }
 
-    delay(20);   // Loop a 50Hz
+    if (ahora - t_mant >= 1000) {
+        t_mant = ahora;
+        web_mantenimiento();
+    }
+
+    if (ahora - t_debug >= DEBUG_PERIODO_MS) {
+        t_debug = ahora;
+        Serial.printf("IZQ: %.1f | CTR: %.1f | DER: %.1f cm | %s | suc %u%% cep %u%%\n",
+            ultrasonic_get(SENSOR_IZQ).distancia_cm,
+            ultrasonic_get(SENSOR_CENTRO).distancia_cm,
+            ultrasonic_get(SENSOR_DER).distancia_cm,
+            nav_estado_texto(), succion_get(), cepillo_get());
+    }
 }

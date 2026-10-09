@@ -3,24 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>Roomba ESP32-S3 Dashboard & Control</title>
-    <!-- Librería NippleJS para los Joysticks -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.0/nipplejs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d0e12">
+    <title>Roomba ESP32-S3</title>
     <style>
         :root {
-            --bg-color: #0d0e12;
-            --panel-bg: #16181f;
-            --panel-card: #1e212b;
-            --border-color: #2b2f3e;
-            --accent-color: #0078d4;
-            --accent-hover: #1084d8;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --danger-color: #ef4444;
-            --danger-glow: rgba(239, 68, 68, 0.4);
-            --text-color: #f1f5f9;
-            --text-muted: #94a3b8;
+            --bg: #0d0e12;
+            --panel: #16181f;
+            --card: #1e212b;
+            --border: #2b2f3e;
+            --accent: #0078d4;
+            --ok: #10b981;
+            --warn: #f59e0b;
+            --danger: #ef4444;
+            --text: #f1f5f9;
+            --muted: #94a3b8;
         }
 
         * {
@@ -28,1376 +25,1284 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            background: var(--bg);
+            color: var(--text);
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            justify-content: center;
             min-height: 100vh;
             padding: 12px 10px;
-            gap: 10px;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .container {
+        button {
+            font: inherit;
+            color: inherit;
+            cursor: pointer;
+            border: none;
+        }
+
+        .app {
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .panel-box {
-            background: var(--panel-bg);
-            padding: 12px 14px;
+        .panel {
+            background: var(--panel);
+            padding: 10px 12px;
             border-radius: 14px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
         }
 
-        /* HEADER & CONEXIÓN */
+        .title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: .72rem;
+            color: var(--muted);
+            font-weight: 700;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        /* CABECERA */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 8px;
         }
 
-        .brand-title {
+        .brand {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .brand-title h1 {
-            font-size: 1.05rem;
-            letter-spacing: 0.5px;
-            font-weight: 700;
+        .brand h1 {
+            white-space: nowrap;
+            font-size: 1rem;
+            letter-spacing: .5px;
         }
 
-        .brand-indicator {
+        .dot {
             width: 9px;
             height: 9px;
             border-radius: 50%;
-            background: var(--danger-color);
-            box-shadow: 0 0 8px var(--danger-color);
-            transition: all 0.3s;
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
         }
 
-        .brand-indicator.online {
-            background: var(--success-color);
-            box-shadow: 0 0 8px var(--success-color);
+        .online .dot {
+            background: var(--ok);
+            box-shadow: 0 0 8px var(--ok);
         }
 
-        .conexion-bar {
+        .conn {
             display: flex;
-            align-items: center;
             gap: 6px;
-            font-size: 0.75rem;
         }
 
-        .ip-input {
-            background: var(--panel-card);
-            border: 1px solid var(--border-color);
-            color: #fff;
+        .conn input {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
             padding: 4px 8px;
             border-radius: 6px;
-            width: 105px;
+            width: 110px;
             text-align: center;
-            font-size: 0.75rem;
+            font-size: .75rem;
             outline: none;
+            -webkit-user-select: text;
+            user-select: text;
         }
 
-        .btn-connect {
-            background: var(--accent-color);
-            color: #fff;
-            border: none;
-            padding: 4px 9px;
+        .btn-con {
+            background: var(--accent);
+            padding: 4px 10px;
             border-radius: 6px;
-            cursor: pointer;
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: .75rem;
         }
 
-        /* BARRA DE TELEMETRÍA RÁPIDA */
-        .telemetria-grid {
+        .online .btn-con {
+            background: var(--danger);
+        }
+
+        /* TELEMETRIA */
+        .tele {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
             text-align: center;
         }
 
-        .tele-card {
-            background: var(--panel-card);
+        .tele div {
+            background: var(--card);
             padding: 6px 4px;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
+            min-width: 0;
         }
 
-        .tele-card .label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
+        .tele small {
+            display: block;
+            font-size: .62rem;
+            color: var(--muted);
             text-transform: uppercase;
             font-weight: 600;
-            display: block;
         }
 
-        .tele-card .val {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #fff;
+        .tele b {
+            display: block;
+            font-size: .8rem;
             margin-top: 2px;
-            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* SISTEMA DE PESTAÑAS (TABS) */
-        .tabs-header {
-            display: flex;
-            background: var(--panel-card);
-            padding: 3px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            gap: 4px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 7px 0;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: transparent;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .tab-btn.active {
-            background: var(--accent-color);
-            color: #ffffff;
-            box-shadow: 0 2px 8px rgba(0, 120, 212, 0.4);
-        }
-
-        .tab-content {
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .tab-content.active {
-            display: flex;
-        }
-
-        /* BOTÓN DE PARADA DE EMERGENCIA (E-STOP) */
-        .btn-estop {
+        /* PARADA DE EMERGENCIA */
+        .estop {
             width: 100%;
-            background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-            color: white;
-            border: none;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
             border-radius: 12px;
             padding: 12px;
-            font-size: 0.95rem;
+            font-size: .95rem;
             font-weight: 800;
             letter-spacing: 1px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px var(--danger-glow);
-            transition: all 0.15s;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, .4);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
 
-        .btn-estop:active {
-            transform: scale(0.98);
-            box-shadow: 0 2px 6px var(--danger-glow);
+        .estop:active {
+            transform: scale(.98);
         }
 
-        /* RADAR ULTRASÓNICO */
-        .radar-box {
-            text-align: center;
-            position: relative;
-        }
-
-        .section-title {
+        /* PESTAÑAS */
+        .tabs {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        #radarCanvas {
-            background: radial-gradient(circle at 50% 90%, #151928 0%, #0a0b10 80%);
+            background: var(--card);
+            padding: 3px;
             border-radius: 10px;
-            border: 1px solid var(--border-color);
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
+            border: 1px solid var(--border);
+            gap: 4px;
         }
 
-        /* SELECTOR DE MODOS */
-        .modos-grid {
+        .tabs button {
+            flex: 1;
+            padding: 7px 0;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: none;
+            border-radius: 7px;
+        }
+
+        .tabs button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .tab {
+            display: none;
+        }
+
+        .tab.active {
+            display: grid;
+            gap: 10px;
+        }
+
+        #tab-control {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            grid-template-areas: "radar radar" "modos modos" "jl ja" "act act";
+        }
+
+        .a-radar { grid-area: radar; }
+        .a-modos { grid-area: modos; }
+        .a-jl { grid-area: jl; }
+        .a-ja { grid-area: ja; }
+        .a-act { grid-area: act; }
+
+        canvas {
+            display: block;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
+
+        #radar {
+            height: 160px;
+            background: radial-gradient(circle at 50% 90%, #151928, #0a0b10 80%);
+        }
+
+        #mapa {
+            height: 260px;
+            background: #0a0c13;
+            touch-action: none;
+        }
+
+        /* MODOS */
+        .modos {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 6px;
         }
 
-        .btn-modo {
-            padding: 8px 4px;
-            border: 1.5px solid var(--border-color);
+        .modos button,
+        .presets button {
+            padding: 8px 2px;
+            border: 1.5px solid var(--border);
             border-radius: 8px;
-            background: var(--panel-card);
-            color: var(--text-muted);
+            background: var(--card);
+            color: var(--muted);
             font-weight: 600;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
+            font-size: .72rem;
         }
 
-        .btn-modo.activo {
-            border-color: var(--accent-color);
-            background: rgba(0, 120, 212, 0.2);
+        .modos button.active,
+        .presets button.active {
+            border-color: var(--accent);
+            background: rgba(0, 120, 212, .2);
             color: #fff;
-            font-weight: 700;
         }
 
         /* JOYSTICKS */
-        .joysticks-grid {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            padding: 4px 0;
-        }
-
-        .joy-wrapper {
+        .joy {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 5px;
-            font-size: 0.72rem;
-            color: var(--text-muted);
+            gap: 6px;
+            font-size: .68rem;
+            color: var(--muted);
             font-weight: 600;
         }
 
-        .joy-box {
-            width: 125px;
-            height: 125px;
+        .stick {
+            width: 120px;
+            height: 120px;
             position: relative;
-            background: radial-gradient(circle, #252836 0%, var(--panel-bg) 75%);
             border-radius: 50%;
-            border: 2px solid var(--border-color);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--border);
+            background: radial-gradient(circle, #252836, var(--panel) 75%);
+            touch-action: none;
         }
 
-        /* ACTUADORES & POTENCIA */
-        .actuadores-container {
+        .stick::before {
+            content: "";
+            position: absolute;
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        .stick.y::before { left: 50%; top: 14%; bottom: 14%; width: 4px; margin-left: -2px; }
+        .stick.x::before { top: 50%; left: 14%; right: 14%; height: 4px; margin-top: -2px; }
+
+        .knob {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--c);
+            opacity: .85;
+            box-shadow: 0 0 12px var(--c);
+            pointer-events: none;
+        }
+
+        .stick.drag .knob {
+            opacity: 1;
+        }
+
+        /* ACTUADORES */
+        .a-act {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
 
-        .actuador-row {
+        .act {
+            background: var(--card);
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .act-head,
+        .act-ctrl {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: var(--panel-card);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
+            gap: 8px;
         }
 
-        .act-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
+        .act-head>div {
+            min-width: 0;
         }
 
-        .act-title {
-            font-size: 0.8rem;
-            font-weight: 700;
+        .act-head b {
+            font-size: .8rem;
+            white-space: nowrap;
         }
 
-        .act-sub {
-            font-size: 0.68rem;
-            color: var(--text-muted);
+        .act-ctrl {
+            flex-wrap: wrap;
         }
 
-        .btn-toggle {
-            padding: 6px 14px;
-            border: none;
+        .act-head small {
+            display: block;
+            font-size: .65rem;
+            color: var(--muted);
+        }
+
+        .toggle {
+            padding: 6px 12px;
             border-radius: 6px;
             font-weight: 700;
-            cursor: pointer;
             background: #333748;
-            color: #fff;
-            font-size: 0.75rem;
-            transition: all 0.2s;
+            font-size: .75rem;
+            min-width: 72px;
         }
 
-        .btn-toggle.on {
-            background: var(--success-color);
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        .toggle.on {
+            background: var(--ok);
+            box-shadow: 0 0 10px rgba(16, 185, 129, .4);
         }
 
-        .power-selector {
+        .presets {
             display: flex;
             gap: 4px;
         }
 
-        .power-btn {
-            background: #252938;
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
+        .presets button {
             padding: 4px 8px;
-            border-radius: 5px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            cursor: pointer;
+            font-size: .68rem;
         }
 
-        .power-btn.active {
-            background: var(--accent-color);
-            color: #fff;
-            border-color: var(--accent-color);
+        input[type=range] {
+            flex: 1;
+            accent-color: var(--accent);
+            min-width: 60px;
         }
 
-        /* TAB MAPA / SLAM */
-        #mapCanvas {
-            background: #090a0f;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            display: block;
-            margin: 0 auto;
-            max-width: 100%;
+        output {
+            font-size: .72rem;
+            color: var(--muted);
+            width: 34px;
+            text-align: right;
         }
 
-        .map-actions {
+        .hint {
+            grid-column: 1 / -1;
+            font-size: .68rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* AJUSTES */
+        .slider {
+            background: var(--card);
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+            font-size: .75rem;
+            color: var(--muted);
+        }
+
+        .slider div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .slider input {
+            width: 100%;
+        }
+
+        .row {
             display: flex;
             gap: 8px;
             margin-top: 8px;
         }
 
-        .btn-secondary {
+        .btn-sec {
             flex: 1;
             padding: 7px;
-            background: var(--panel-card);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 6px;
-            font-size: 0.75rem;
-            cursor: pointer;
+            font-size: .75rem;
         }
 
-        /* TAB AJUSTES Y SIMULADOR */
-        .slider-group {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            background: var(--panel-card);
-            padding: 8px 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 6px;
-        }
-
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .slider-group input[type="range"] {
-            width: 100%;
-            accent-color: var(--accent-color);
-            cursor: pointer;
-        }
-
-        /* LOG / TERMINAL */
-        .console-box {
+        /* REGISTRO */
+        .console {
             background: #06070a;
-            border: 1px solid var(--border-color);
-            font-family: 'Consolas', monospace;
-            font-size: 0.72rem;
+            border: 1px solid var(--border);
+            font-family: Consolas, monospace;
+            font-size: .7rem;
             border-radius: 8px;
             padding: 6px 10px;
-            color: #10b981;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            max-height: 70px;
+            color: var(--ok);
+            height: 74px;
             overflow-y: auto;
-        }
-
-        .log-entry {
-            line-height: 1.25;
+            line-height: 1.3;
             word-break: break-all;
         }
 
-        .key-hints {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: -2px;
+        .link {
+            cursor: pointer;
+            text-transform: none;
+            font-weight: 500;
         }
 
-        /* ========================================================
-           MODO HORIZONTAL ERGONÓMICO (LANDSCAPE / GAMEPAD MODE)
-           Al rotar el smartphone horizontalmente:
-           - Pulgar Izquierdo: Joystick de Velocidad
-           - Centro: Radar / Mapa / E-STOP
-           - Pulgar Derecho: Joystick de Dirección y Actuadores
-           ======================================================== */
+        /* HORIZONTAL (mando tipo gamepad) */
         @media (orientation: landscape) and (max-height: 550px) {
-            body {
-                padding: 6px 10px;
+            body { padding: 6px 10px; }
+            .app { max-width: 100%; gap: 6px; }
+            .tele, .hint, .act-head small { display: none; }
+            .panel { padding: 6px 8px; }
+            .tabs button { padding: 4px 0; font-size: .72rem; }
+            .estop { padding: 7px; font-size: .8rem; }
+
+            #tab-control.active {
+                grid-template-columns: 150px minmax(0, 1fr) 210px;
+                grid-template-areas: "jl radar ja" "jl modos act";
                 gap: 6px;
-            }
-
-            .container {
-                max-width: 100%;
-                gap: 6px;
-            }
-
-            .header {
-                padding: 6px 12px;
-            }
-
-            .header h1 {
-                font-size: 0.9rem;
-            }
-
-            .telemetria-grid {
-                display: none;
-                /* Ocultar para maximizar área de mando */
-            }
-
-            .tabs-header {
-                padding: 2px;
-            }
-
-            .tab-btn {
-                padding: 4px 0;
-                font-size: 0.72rem;
-            }
-
-            .btn-estop {
-                padding: 7px;
-                font-size: 0.8rem;
-                border-radius: 8px;
-            }
-
-            /* Reorganización del Tab de Control en 3 Columnas */
-            #tab-control.tab-content.active {
-                display: grid;
-                grid-template-columns: 140px 1fr 140px;
-                grid-template-rows: auto auto;
-                gap: 8px;
                 align-items: start;
             }
 
-            /* Columna Izquierda: Joystick Lineal */
-            .joysticks-grid {
-                display: contents;
-                /* Desacopla los dos joysticks en el grid */
-            }
-
-            .joy-wrapper:first-child {
-                grid-column: 1;
-                grid-row: 1 / span 2;
-                background: var(--panel-bg);
-                padding: 8px;
-                border-radius: 12px;
-                border: 1px solid var(--border-color);
-                justify-self: center;
-            }
-
-            /* Columna Central: Radar y Modos */
-            .radar-box {
-                grid-column: 2;
-                grid-row: 1;
-                padding: 6px;
-            }
-
-            #radarCanvas {
-                height: 120px;
-                width: auto;
-            }
-
-            #tab-control>.panel-box:nth-child(2) {
-                grid-column: 2;
-                grid-row: 2;
-                padding: 6px;
-            }
-
-            .modos-grid .btn-modo {
-                padding: 5px 2px;
-                font-size: 0.68rem;
-            }
-
-            /* Columna Derecha: Joystick Angular y Actuadores */
-            .joy-wrapper:last-child {
-                grid-column: 3;
-                grid-row: 1;
-                background: var(--panel-bg);
-                padding: 8px;
-                border-radius: 12px;
-                border: 1px solid var(--border-color);
-                justify-self: center;
-            }
-
-            .actuadores-container {
-                grid-column: 3;
-                grid-row: 2;
-                gap: 4px;
-                padding: 6px;
-            }
-
-            .actuador-row {
-                padding: 4px 6px;
-            }
-
-            .act-title {
-                font-size: 0.7rem;
-            }
-
-            .act-sub,
-            .power-selector {
-                display: none;
-                /* Simplificado para mando en horizontal */
-            }
-
-            .btn-toggle {
-                padding: 4px 8px;
-                font-size: 0.68rem;
-            }
-
-            .key-hints {
-                display: none;
-            }
-
-            .console-box {
-                max-height: 40px;
-                font-size: 0.65rem;
-            }
-
-            .joy-box {
-                width: 105px;
-                height: 105px;
-            }
+            .a-jl { align-self: stretch; justify-content: center; }
+            #radar { height: 120px; }
+            .stick { width: 105px; height: 105px; }
+            .modos button { padding: 5px 2px; font-size: .66rem; }
+            .act { padding: 5px 6px; gap: 4px; }
+            .act-head b { font-size: .72rem; }
+            .presets { display: none; }
+            .console { height: 40px; }
         }
     </style>
 </head>
 
 <body>
+    <main class="app" id="app">
 
-    <div class="container">
-
-        <!-- CABECERA DE CONTROL Y CONEXIÓN -->
-        <div class="panel-box header">
-            <div class="brand-title">
-                <div id="brand-ind" class="brand-indicator"></div>
+        <header class="panel header">
+            <div class="brand">
+                <i class="dot"></i>
                 <h1>ROOMBA ESP32-S3</h1>
             </div>
-            <div class="conexion-bar">
-                <input type="text" id="ip-esp32" class="ip-input" value="192.168.4.1" placeholder="IP Robot">
-                <button id="btn-conectar" class="btn-connect" onclick="toggleConexion()">Conectar</button>
+            <div class="conn">
+                <input id="ip" value="192.168.4.1" placeholder="IP robot" aria-label="IP del robot">
+                <button id="btn-con" class="btn-con">Conectar</button>
             </div>
-        </div>
+        </header>
 
-        <!-- TELEMETRÍA RÁPIDA -->
-        <div class="panel-box telemetria-grid">
-            <div class="tele-card">
-                <span class="label">Batería</span>
-                <span id="tel-bateria" class="val" style="color:#10b981;">12.4V (92%)</span>
-            </div>
-            <div class="tele-card">
-                <span class="label">Misión</span>
-                <span id="tel-tiempo" class="val">00:00</span>
-            </div>
-            <div class="tele-card">
-                <span class="label">Latencia</span>
-                <span id="tel-ping" class="val">-- ms</span>
-            </div>
-            <div class="tele-card">
-                <span class="label">Estado</span>
-                <span id="tel-estado" class="val" style="color:var(--warning-color);">IDLE</span>
-            </div>
-        </div>
+        <section class="panel tele">
+            <div><small>Estado</small><b id="t-estado">OFFLINE</b></div>
+            <div><small>Modo</small><b id="t-modo">MANUAL</b></div>
+            <div><small>Misión</small><b id="t-mis">00:00</b></div>
+            <div><small>Latencia</small><b id="t-ping">-- ms</b></div>
+        </section>
 
-        <!-- BOTÓN PARADA DE EMERGENCIA (SIEMPRE DISPONIBLE) -->
-        <button class="btn-estop" onclick="paradaEmergencia()">
+        <button id="estop" class="estop">
             <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" />
                 <path d="m9 9 6 6m0-6-6 6" />
             </svg>
-            PARADA DE EMERGENCIA (STOP)
+            PARADA DE EMERGENCIA
         </button>
 
-        <!-- SELECTOR DE PESTAÑAS -->
-        <div class="tabs-header">
-            <button class="tab-btn active" onclick="showTab('control')">Control & Radar</button>
-            <button class="tab-btn" onclick="showTab('mapa')">Mapa Cobertura</button>
-            <button class="tab-btn" onclick="showTab('ajustes')">Ajustes & Sim</button>
+        <nav class="tabs" id="tabs">
+            <button data-tab="control" class="active">Control</button>
+            <button data-tab="mapa">Mapa</button>
+            <button data-tab="ajustes">Ajustes</button>
+        </nav>
+
+        <!-- TAB CONTROL -->
+        <div id="tab-control" class="tab active">
+            <section class="panel a-radar">
+                <div class="title"><span>Radar ultrasónico</span><span id="radar-sum">--</span></div>
+                <canvas id="radar"></canvas>
+            </section>
+
+            <section class="panel a-modos">
+                <div class="modos" id="modos">
+                    <button data-modo="MANUAL" class="active">MANUAL</button>
+                    <button data-modo="AUTO">AUTÓNOMO</button>
+                    <button data-modo="PAREDES">BORDES</button>
+                    <button data-modo="ESPIRAL">ESPIRAL</button>
+                </div>
+            </section>
+
+            <section class="panel joy a-jl">
+                <span>AVANCE / RETROCESO</span>
+                <div class="stick y" id="stick-lin" style="--c:#10b981"></div>
+            </section>
+
+            <section class="panel joy a-ja">
+                <span>GIRO IZQ / DER</span>
+                <div class="stick x" id="stick-ang" style="--c:#0078d4"></div>
+            </section>
+
+            <section class="panel a-act">
+                <div class="act" data-cmd="SUCCION" data-key="suc">
+                    <div class="act-head">
+                        <div><b>Turbina de succión</b><small class="sub">BLDC · PWM directo</small></div>
+                        <button class="toggle">OFF</button>
+                    </div>
+                    <div class="act-ctrl">
+                        <div class="presets"><button data-v="40">Eco</button><button data-v="75">Norm</button><button data-v="100">Turbo</button></div>
+                        <input type="range" min="10" max="100" step="5" value="75" aria-label="Potencia de succión">
+                        <output>75%</output>
+                    </div>
+                </div>
+                <div class="act" data-cmd="CEPILLO" data-key="cep">
+                    <div class="act-head">
+                        <div><b>Cepillo rotativo</b><small class="sub">DC · MOSFET PWM</small></div>
+                        <button class="toggle">OFF</button>
+                    </div>
+                    <div class="act-ctrl">
+                        <div class="presets"><button data-v="40">Suave</button><button data-v="70">Norm</button><button data-v="100">Max</button></div>
+                        <input type="range" min="10" max="100" step="5" value="70" aria-label="Potencia del cepillo">
+                        <output>70%</output>
+                    </div>
+                </div>
+            </section>
+
+            <p class="hint">Teclado: W/S avance · A/D giro · Espacio parada</p>
         </div>
 
-        <!-- TAB 1: CONTROL & RADAR -->
-        <div id="tab-control" class="tab-content active">
-
-            <!-- RADAR ULTRASÓNICO CANVAS -->
-            <div class="panel-box radar-box">
-                <div class="section-title">
-                    <span>Radar Ultrasónico (HC-SR04)</span>
-                    <span id="radar-summary" style="font-size:0.7rem; color:#10b981;">VÍA DESPEJADA</span>
+        <!-- TAB MAPA -->
+        <div id="tab-mapa" class="tab">
+            <section class="panel">
+                <div class="title"><span>Cobertura estimada</span><span id="map-info"></span></div>
+                <canvas id="mapa"></canvas>
+                <div class="row">
+                    <button class="btn-sec" id="btn-map-reset">Reiniciar mapa</button>
+                    <button class="btn-sec" id="btn-map-centrar">Centrar vista</button>
                 </div>
-                <canvas id="radarCanvas" width="340" height="160"></canvas>
-            </div>
-
-            <!-- SELECTOR DE MODOS DE LIMPIEZA -->
-            <div class="panel-box">
-                <div class="section-title">
-                    <span>Modo de Operación</span>
-                </div>
-                <div class="modos-grid">
-                    <button id="modo-manual" class="btn-modo activo" onclick="setModo('MANUAL')">MANUAL</button>
-                    <button id="modo-auto" class="btn-modo" onclick="setModo('AUTO')">AUTÓNOMO</button>
-                    <button id="modo-bordes" class="btn-modo" onclick="setModo('PAREDES')">BORDES</button>
-                    <button id="modo-espiral" class="btn-modo" onclick="setModo('ESPIRAL')">ESPIRAL</button>
-                </div>
-            </div>
-
-            <!-- JOYSTICKS (VELOCIDAD Y DIRECCIÓN) -->
-            <div class="panel-box">
-                <div class="section-title">
-                    <span>Mando Virtual Manual</span>
-                    <span style="font-size:0.65rem; color:var(--text-muted);">o usa WASD</span>
-                </div>
-                <div class="joysticks-grid">
-                    <div class="joy-wrapper">
-                        <span>AVANCE / RETROCESO</span>
-                        <div id="joy-lineal" class="joy-box"></div>
-                    </div>
-                    <div class="joy-wrapper">
-                        <span>GIRO (IZQ / DER)</span>
-                        <div id="joy-angular" class="joy-box"></div>
-                    </div>
-                </div>
-                <div class="key-hints">Teclado: [W] Avance | [S] Reversa | [A] Izq | [D] Der | [ESPACIO] Stop</div>
-            </div>
-
-            <!-- ACTUADORES (SUCCIÓN CON POTENCIAS Y CEPILLO) -->
-            <div class="panel-box actuadores-container">
-                <div class="actuador-row">
-                    <div class="act-info">
-                        <span class="act-title">Turbina de Succión</span>
-                        <div class="power-selector">
-                            <button class="power-btn" onclick="setPotenciaSuccion(40)">Eco</button>
-                            <button class="power-btn active" onclick="setPotenciaSuccion(75)">Norm</button>
-                            <button class="power-btn" onclick="setPotenciaSuccion(100)">Turbo</button>
-                        </div>
-                    </div>
-                    <button id="btn-succion" class="btn-toggle" onclick="toggleSuccion()">OFF</button>
-                </div>
-                <div class="actuador-row">
-                    <div class="act-info">
-                        <span class="act-title">Cepillo Rotativo</span>
-                        <span class="act-sub">Barrido mecánico central</span>
-                    </div>
-                    <button id="btn-cepillo" class="btn-toggle" onclick="toggleCepillo()">OFF</button>
-                </div>
-            </div>
-
+            </section>
         </div>
 
-        <!-- TAB 2: MAPA DE COBERTURA (SLAM BÁSICO) -->
-        <div id="tab-mapa" class="tab-content">
-            <div class="panel-box">
-                <div class="section-title">
-                    <span>Estimación de Cobertura 2D</span>
-                    <span id="cobertura-txt">Área limpia: ~2.4 m²</span>
-                </div>
-                <canvas id="mapCanvas" width="340" height="220"></canvas>
-                <div class="map-actions">
-                    <button class="btn-secondary" onclick="limpiarMapa()">Reiniciar Mapa</button>
-                    <button class="btn-secondary" onclick="centrarRobot()">Centrar Vista</button>
-                </div>
-            </div>
+        <!-- TAB AJUSTES -->
+        <div id="tab-ajustes" class="tab">
+            <section class="panel">
+                <div class="title"><span>Navegación</span></div>
+                <label class="slider">
+                    <div><span>Distancia umbral de obstáculo</span><b id="v-umbral">20 cm</b></div>
+                    <input type="range" id="cfg-umbral" min="10" max="50" value="20" data-unit=" cm">
+                </label>
+                <label class="slider">
+                    <div><span>Velocidad autónoma</span><b id="v-vel">60 %</b></div>
+                    <input type="range" id="cfg-vel" min="20" max="100" step="5" value="60" data-unit=" %">
+                </label>
+            </section>
+            <section class="panel">
+                <div class="title"><span>Simulación de sensores</span><span>solo sin conexión</span></div>
+                <label class="slider">
+                    <div><span>Izquierdo</span><b id="v-sim-0">65 cm</b></div>
+                    <input type="range" class="sim" data-i="0" min="2" max="100" value="65">
+                </label>
+                <label class="slider">
+                    <div><span>Central</span><b id="v-sim-1">40 cm</b></div>
+                    <input type="range" class="sim" data-i="1" min="2" max="100" value="40">
+                </label>
+                <label class="slider">
+                    <div><span>Derecho</span><b id="v-sim-2">35 cm</b></div>
+                    <input type="range" class="sim" data-i="2" min="2" max="100" value="35">
+                </label>
+            </section>
         </div>
 
-        <!-- TAB 3: AJUSTES & SIMULADOR -->
-        <div id="tab-ajustes" class="tab-content">
-            <div class="panel-box">
-                <div class="section-title">
-                    <span>Simulación de Sensores (Live Server)</span>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span>Sensor Izquierdo</span>
-                        <b id="val-izq">65 cm</b>
-                    </div>
-                    <input type="range" id="sim-izq" min="2" max="100" value="65" oninput="actualizarSimulacion()">
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span>Sensor Central</span>
-                        <b id="val-ctr">15 cm</b>
-                    </div>
-                    <input type="range" id="sim-ctr" min="2" max="100" value="15" oninput="actualizarSimulacion()">
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span>Sensor Derecho</span>
-                        <b id="val-der">35 cm</b>
-                    </div>
-                    <input type="range" id="sim-der" min="2" max="100" value="35" oninput="actualizarSimulacion()">
-                </div>
+        <section class="panel">
+            <div class="title" style="margin-bottom:4px">
+                <span>Registro</span><span class="link" id="log-clear">Borrar</span>
             </div>
-
-            <div class="panel-box">
-                <div class="section-title">
-                    <span>Parámetros de Navegación</span>
-                </div>
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <span>Distancia umbral obstáculo</span>
-                        <b id="val-umbral">20 cm</b>
-                    </div>
-                    <input type="range" id="cfg-umbral" min="10" max="50" value="20"
-                        oninput="document.getElementById('val-umbral').textContent = this.value + ' cm'">
-                </div>
-            </div>
-        </div>
-
-        <!-- TERMINAL DE LOGS -->
-        <div class="panel-box">
-            <div class="section-title" style="margin-bottom:4px;">
-                <span>Registro de Eventos</span>
-                <span style="font-size:0.65rem; color:var(--text-muted); cursor:pointer;"
-                    onclick="document.getElementById('console').innerHTML=''">Borrar</span>
-            </div>
-            <div id="console" class="console-box">
-                <div class="log-entry">> Sistema inicializado. Listo para operar.</div>
-            </div>
-        </div>
-
-    </div>
+            <div id="console" class="console"></div>
+        </section>
+    </main>
 
     <script>
-        // ==========================================
-        //  1. GESTIÓN DE PESTAÑAS (TABS)
-        // ==========================================
-        function showTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        'use strict';
+        const $ = (id) => document.getElementById(id);
+        const setText = (el, txt) => { if (el.textContent !== txt) el.textContent = txt; };
 
-            const btnIndex = tabId === 'control' ? 0 : (tabId === 'mapa' ? 1 : 2);
-            document.querySelectorAll('.tab-btn')[btnIndex].classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
+        // Geometria: sensores a -90° (izq), 0° (frente), +90° (der) respecto al frente
+        const SENS_ANG = [-90, 0, 90].map((g) => g * Math.PI / 180);
+        const RADAR_MAX_CM = 100;
+        const V_MAX_CM_S = 30;      // velocidad lineal estimada a 100 %
+        const W_MAX_RAD_S = 3;      // velocidad angular estimada a 100 %
+        const ANCHO_CEPILLO_CM = 20;
+        const MAX_LOG = 60;
 
-            if (tabId === 'mapa') {
-                dibujarMapa();
+        const st = {
+            online: false,
+            modo: 'MANUAL',
+            estado: 'IDLE',
+            radar: [65, 40, 35],    // cm, null = sin eco
+            umbral: 20,
+            vel: 60,
+        };
+
+        // ==========================================
+        //  REGISTRO
+        // ==========================================
+        const consola = $('console');
+        function log(msg) {
+            const e = document.createElement('div');
+            e.textContent = `[${new Date().toLocaleTimeString('es', { hour12: false })}] ${msg}`;
+            consola.append(e);
+            while (consola.childElementCount > MAX_LOG) consola.firstChild.remove();
+            consola.scrollTop = consola.scrollHeight;
+        }
+        $('log-clear').onclick = () => consola.replaceChildren();
+
+        // ==========================================
+        //  RENDER: canvas con soporte HiDPI y redibujo bajo demanda
+        // ==========================================
+        const sucio = new Set();
+        let rafPendiente = false;
+
+        function redibujar(que) {
+            sucio.add(que);
+            if (!rafPendiente) {
+                rafPendiente = true;
+                requestAnimationFrame(frame);
             }
         }
 
-        // ==========================================
-        //  2. RADAR ULTRASÓNICO CANVAS
-        // ==========================================
-        const rCanvas = document.getElementById("radarCanvas");
-        const rCtx = rCanvas.getContext("2d");
-        let sweepAngle = 0;
+        function frame() {
+            rafPendiente = false;
+            if (sucio.has('radar')) dibujarRadar();
+            if (sucio.has('mapa') && $('tab-mapa').classList.contains('active')) dibujarMapa();
+            sucio.clear();
+        }
 
-        function dibujarRadar(distIzq, distCentro, distDer) {
-            rCtx.clearRect(0, 0, rCanvas.width, rCanvas.height);
-
-            const origX = rCanvas.width / 2;
-            const origY = rCanvas.height - 15;
-            const maxDist = 100; // 100 cm
-            const rMax = rCanvas.height - 25;
-
-            // Arcos de distancia concéntricos
-            rCtx.lineWidth = 1;
-            [25, 50, 75, 100].forEach(cm => {
-                const r = (cm / maxDist) * rMax;
-                rCtx.beginPath();
-                rCtx.arc(origX, origY, r, Math.PI, 0);
-                rCtx.strokeStyle = "#1e2333";
-                rCtx.stroke();
-
-                rCtx.fillStyle = "#4f5874";
-                rCtx.font = "9px Segoe UI";
-                rCtx.fillText(cm + "cm", origX + 4, origY - r + 9);
-            });
-
-            // Rayos angulares de referencia (-90°, -45°, 0°, 45°, 90°)
-            [-90, -45, 0, 45, 90].forEach(ang => {
-                const angRad = (ang - 90) * (Math.PI / 180);
-                rCtx.beginPath();
-                rCtx.moveTo(origX, origY);
-                rCtx.lineTo(origX + Math.cos(angRad) * rMax, origY + Math.sin(angRad) * rMax);
-                rCtx.strokeStyle = "#181c2b";
-                rCtx.stroke();
-            });
-
-            // Función para dibujar un haz y zona de detección
-            function dibujarHaz(distancia, anguloGrados, label) {
-                const angRad = (anguloGrados - 90) * (Math.PI / 180);
-                const distClamped = Math.min(Math.max(distancia, 0), maxDist);
-                const largoPx = (distClamped / maxDist) * rMax;
-
-                const targetX = origX + Math.cos(angRad) * largoPx;
-                const targetY = origY + Math.sin(angRad) * largoPx;
-
-                // Color dinámico según proximidad
-                let color = "#10b981"; // Verde
-                let glow = "rgba(16, 185, 129, 0.4)";
-                if (distClamped < 20) {
-                    color = "#ef4444"; // Rojo peligro
-                    glow = "rgba(239, 68, 68, 0.5)";
-                } else if (distClamped < 40) {
-                    color = "#f59e0b"; // Amarillo
-                    glow = "rgba(245, 158, 11, 0.4)";
-                }
-
-                // Dibujar rayo y cono
-                rCtx.beginPath();
-                rCtx.moveTo(origX, origY);
-                rCtx.lineTo(targetX, targetY);
-                rCtx.strokeStyle = color;
-                rCtx.lineWidth = 4;
-                rCtx.lineCap = "round";
-                rCtx.stroke();
-
-                // Punto obstáculo con halo
-                rCtx.beginPath();
-                rCtx.arc(targetX, targetY, 6, 0, Math.PI * 2);
-                rCtx.fillStyle = color;
-                rCtx.shadowColor = glow;
-                rCtx.shadowBlur = 10;
-                rCtx.fill();
-                rCtx.shadowBlur = 0;
-
-                // Etiqueta de distancia
-                rCtx.fillStyle = "#ffffff";
-                rCtx.font = "bold 10px Segoe UI";
-                rCtx.fillText(Math.round(distClamped) + "cm", targetX - 12, targetY - 9);
-            }
-
-            // Sensores configurados ortogonales: Izquierda (-90°), Frente (0°), Derecha (+90°)
-            dibujarHaz(distIzq, -90, "IZQ");
-            dibujarHaz(distCentro, 0, "CTR");
-            dibujarHaz(distDer, 90, "DER");
-
-            // Base del robot
-            rCtx.beginPath();
-            rCtx.arc(origX, origY, 15, Math.PI, 0);
-            rCtx.fillStyle = "#0078d4";
-            rCtx.fill();
-            rCtx.lineWidth = 2;
-            rCtx.strokeStyle = "#ffffff";
-            rCtx.stroke();
-
-            // Resumen de advertencia
-            const summary = document.getElementById("radar-summary");
-            if (distCentro < 20 || distIzq < 18 || distDer < 18) {
-                summary.textContent = "ALERTA: OBSTÁCULO CERCANO";
-                summary.style.color = "var(--danger-color)";
-            } else if (distCentro < 40) {
-                summary.textContent = "PRECAUCIÓN: ZONA PRÓXIMA";
-                summary.style.color = "var(--warning-color)";
-            } else {
-                summary.textContent = "VÍA DESPEJADA";
-                summary.style.color = "var(--success-color)";
-            }
+        function ajustarCanvas(cv) {
+            const r = cv.getBoundingClientRect();
+            if (!r.width) return null;
+            const dpr = window.devicePixelRatio || 1;
+            cv.width = Math.round(r.width * dpr);
+            cv.height = Math.round(r.height * dpr);
+            const ctx = cv.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            return { ctx, w: r.width, h: r.height, dpr };
         }
 
         // ==========================================
-        //  3. MAPA DE RECORRIDO 2D (TRAYECTORIA & OBSTÁCULOS)
+        //  RADAR
         // ==========================================
-        const mMap = document.getElementById("mapCanvas");
-        const mCtx = mMap.getContext("2d");
-        let robotPos = { x: mMap.width / 2, y: mMap.height / 2, angle: 0 };
-        let trayectoria = [{ x: robotPos.x, y: robotPos.y }];
-        let obstaculos = []; // Lista de obstáculos fijos detectados {x, y, timestamp}
-        let ultimasLecturasSensores = [65, 15, 35]; // [izq, ctr, der]
-        const escalaPxCm = 1.0; // 1 cm = 1 px
+        const radarCv = $('radar');
+        let radar = null;           // { ctx, w, h, dpr, fondo }
 
-        function proyectarObstaculos(distIzq, distCentro, distDer) {
-            ultimasLecturasSensores = [distIzq, distCentro, distDer];
-            const angulosSensores = [-90, 0, 90]; // Sensores a 90°: Izquierda, Frente, Derecha
-            const lecturas = [distIzq, distCentro, distDer];
+        function colorDist(d) {
+            if (d == null) return '#475569';
+            if (d < st.umbral) return '#ef4444';
+            if (d < st.umbral * 2) return '#f59e0b';
+            return '#10b981';
+        }
 
-            lecturas.forEach((dist, i) => {
-                // Si está dentro de rango de detección de obstáculo (< 65 cm)
-                if (dist > 3 && dist < 65) {
-                    const anguloAbsRad = robotPos.angle + (angulosSensores[i] * Math.PI / 180);
-                    const obsX = robotPos.x + Math.sin(anguloAbsRad) * (dist * escalaPxCm);
-                    const obsY = robotPos.y - Math.cos(anguloAbsRad) * (dist * escalaPxCm);
+        function geometriaRadar(w, h) {
+            return { ox: w / 2, oy: h - 12, R: Math.min(h - 24, w / 2 - 12) };
+        }
 
-                    // Evitar duplicados muy cercanos (a menos de 7 px)
-                    const yaExiste = obstaculos.some(o => Math.hypot(o.x - obsX, o.y - obsY) < 7);
-                    if (!yaExiste) {
-                        obstaculos.push({ x: obsX, y: obsY, dist: dist, time: Date.now() });
-                        // Limitar a los últimos 150 obstáculos para no saturar
-                        if (obstaculos.length > 150) obstaculos.shift();
-                    }
-                }
-            });
+        function crearFondoRadar() {
+            // Arcos y rayos estaticos: se dibujan una sola vez por tamaño
+            const { w, h, dpr } = radar;
+            const off = document.createElement('canvas');
+            off.width = w * dpr;
+            off.height = h * dpr;
+            const c = off.getContext('2d');
+            c.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const { ox, oy, R } = geometriaRadar(w, h);
 
-            if (document.getElementById('tab-mapa').classList.contains('active')) {
-                dibujarMapa();
+            c.lineWidth = 1;
+            c.font = '9px Segoe UI, sans-serif';
+            c.textAlign = 'center';
+            c.fillStyle = '#4f5874';
+            c.strokeStyle = '#1e2333';
+            for (const cm of [25, 50, 75, 100]) {
+                const r = cm / RADAR_MAX_CM * R;
+                c.beginPath();
+                c.arc(ox, oy, r, Math.PI, 0);
+                c.stroke();
+                c.fillText(cm, ox + r, oy + 10);   // etiqueta sobre la base, lejos de los haces
             }
+            c.strokeStyle = '#181c2b';
+            for (const g of [-90, -45, 0, 45, 90]) {
+                const a = g * Math.PI / 180;
+                c.beginPath();
+                c.moveTo(ox, oy);
+                c.lineTo(ox + Math.sin(a) * R, oy - Math.cos(a) * R);
+                c.stroke();
+            }
+            radar.fondo = off;
+        }
+
+        function dibujarRadar() {
+            if (!radar) return;
+            const { ctx, w, h } = radar;
+            const { ox, oy, R } = geometriaRadar(w, h);
+            ctx.clearRect(0, 0, w, h);
+            ctx.drawImage(radar.fondo, 0, 0, w, h);
+
+            ctx.lineCap = 'round';
+            ctx.font = 'bold 10px Segoe UI, sans-serif';
+            ctx.textAlign = 'center';
+            st.radar.forEach((d, i) => {
+                const a = SENS_ANG[i];
+                const dc = d == null ? RADAR_MAX_CM : Math.min(d, RADAR_MAX_CM);
+                const x = ox + Math.sin(a) * dc / RADAR_MAX_CM * R;
+                const y = oy - Math.cos(a) * dc / RADAR_MAX_CM * R;
+                const col = colorDist(d);
+
+                ctx.strokeStyle = col;
+                ctx.lineWidth = 4;
+                ctx.setLineDash(d == null ? [4, 6] : []);
+                ctx.beginPath();
+                ctx.moveTo(ox, oy);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = col;
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#fff';
+                ctx.fillText(d == null ? '--' : Math.round(d) + 'cm', x, y - 10);
+            });
+            ctx.textAlign = 'start';
+
+            // Robot
+            ctx.beginPath();
+            ctx.arc(ox, oy, 14, Math.PI, 0);
+            ctx.fillStyle = '#0078d4';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+
+            // Resumen
+            const validas = st.radar.filter((d) => d != null);
+            const min = validas.length ? Math.min(...validas) : Infinity;
+            const sum = $('radar-sum');
+            const [txt, col] = min < st.umbral ? ['ALERTA: OBSTÁCULO', 'var(--danger)']
+                : min < st.umbral * 2 ? ['PRECAUCIÓN', 'var(--warn)']
+                : ['VÍA DESPEJADA', 'var(--ok)'];
+            setText(sum, txt);
+            sum.style.color = col;
+        }
+
+        // ==========================================
+        //  MAPA DE COBERTURA (estimacion por comandos, sin encoders)
+        // ==========================================
+        const mapaCv = $('mapa');
+        const ESC = 0.5;                       // px por cm
+        let mapa = null;
+        let pose, tray, obst, recorrido, vista;
+
+        function reiniciarMapa() {
+            pose = { x: 0, y: 0, a: 0 };       // cm, rad (0 = arriba, + = horario)
+            tray = [[0, 0]];
+            obst = new Map();                  // celda → [x, y]
+            recorrido = 0;
+            vista = { x: 0, y: 0 };
+            redibujar('mapa');
+        }
+        reiniciarMapa();
+
+        function proyectarObstaculos() {
+            st.radar.forEach((d, i) => {
+                if (d == null || d > 80) return;
+                const a = pose.a + SENS_ANG[i];
+                const x = pose.x + Math.sin(a) * d;
+                const y = pose.y - Math.cos(a) * d;
+                const k = Math.round(x / 4) + ',' + Math.round(y / 4);   // rejilla de 4 cm
+                if (obst.has(k)) return;
+                obst.set(k, [x, y]);
+                if (obst.size > 400) obst.delete(obst.keys().next().value);
+            });
+            redibujar('mapa');
+        }
+
+        function comandoEstimado() {
+            if (st.modo === 'MANUAL') return [mando.lin(), mando.ang()];
+            switch (st.estado) {
+                case 'AVANZANDO': return [st.vel, 0];
+                case 'RETROCEDIENDO': return [-st.vel, 0];
+                case 'GIRANDO': return [0, 50];
+                case 'ESPIRAL': return [st.vel, st.vel / 2];
+                case 'SIGUIENDO PARED': return [st.vel * 0.8, 0];
+                default: return [0, 0];
+            }
+        }
+
+        function integrarPose(dt) {
+            const [lin, ang] = comandoEstimado();
+            if (!lin && !ang) return;
+            pose.a += ang / 100 * W_MAX_RAD_S * dt;
+            const d = lin / 100 * V_MAX_CM_S * dt;
+            pose.x += Math.sin(pose.a) * d;
+            pose.y -= Math.cos(pose.a) * d;
+            recorrido += Math.abs(d);
+
+            const [ux, uy] = tray[tray.length - 1];
+            if (Math.hypot(pose.x - ux, pose.y - uy) > 3) {
+                tray.push([pose.x, pose.y]);
+                if (tray.length > 3000) tray.splice(0, 500);
+            }
+            // Seguir al robot si se acerca al borde de la vista
+            if (mapa) {
+                const sx = (pose.x - vista.x) * ESC, sy = (pose.y - vista.y) * ESC;
+                if (Math.abs(sx) > mapa.w * 0.4 || Math.abs(sy) > mapa.h * 0.4) vista = { x: pose.x, y: pose.y };
+            }
+            redibujar('mapa');
         }
 
         function dibujarMapa() {
-            mCtx.fillStyle = "#0a0c13";
-            mCtx.fillRect(0, 0, mMap.width, mMap.height);
+            if (!mapa) return;
+            const { ctx, w, h } = mapa;
+            const cx = w / 2 - vista.x * ESC, cy = h / 2 - vista.y * ESC;
+            const px = (x) => cx + x * ESC, py = (y) => cy + y * ESC;
 
-            // Rejilla de referencia
-            mCtx.strokeStyle = "#161b2a";
-            mCtx.lineWidth = 1;
-            for (let x = 0; x < mMap.width; x += 20) {
-                mCtx.beginPath(); mCtx.moveTo(x, 0); mCtx.lineTo(x, mMap.height); mCtx.stroke();
+            ctx.clearRect(0, 0, w, h);
+
+            // Rejilla cada 50 cm
+            const paso = 50 * ESC;
+            ctx.strokeStyle = '#161b2a';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = ((cx % paso) + paso) % paso; x < w; x += paso) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+            for (let y = ((cy % paso) + paso) % paso; y < h; y += paso) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+            ctx.stroke();
+
+            // Trayectoria (franja aspirada + linea central)
+            if (tray.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(px(tray[0][0]), py(tray[0][1]));
+                for (let i = 1; i < tray.length; i++) ctx.lineTo(px(tray[i][0]), py(tray[i][1]));
+                ctx.lineCap = ctx.lineJoin = 'round';
+                ctx.strokeStyle = 'rgba(0,120,212,.3)';
+                ctx.lineWidth = ANCHO_CEPILLO_CM * ESC;
+                ctx.stroke();
+                ctx.strokeStyle = '#0078d4';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
             }
-            for (let y = 0; y < mMap.height; y += 20) {
-                mCtx.beginPath(); mCtx.moveTo(0, y); mCtx.lineTo(mMap.width, y); mCtx.stroke();
+
+            // Obstaculos
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            for (const [x, y] of obst.values()) {
+                ctx.moveTo(px(x) + 3, py(y));
+                ctx.arc(px(x), py(y), 3, 0, Math.PI * 2);
             }
+            ctx.fill();
 
-            // 1. Dibujar trayectoria limpia (franja de aspirado recorrida)
-            if (trayectoria.length > 1) {
-                mCtx.beginPath();
-                mCtx.moveTo(trayectoria[0].x, trayectoria[0].y);
-                for (let i = 1; i < trayectoria.length; i++) {
-                    mCtx.lineTo(trayectoria[i].x, trayectoria[i].y);
-                }
-                mCtx.strokeStyle = "rgba(0, 120, 212, 0.35)";
-                mCtx.lineWidth = 16;
-                mCtx.lineCap = "round";
-                mCtx.lineJoin = "round";
-                mCtx.stroke();
-
-                mCtx.strokeStyle = "#0078d4";
-                mCtx.lineWidth = 2;
-                mCtx.stroke();
-            }
-
-            // 2. Dibujar obstáculos detectados acumulados en el entorno (puntos rojos con halo)
-            obstaculos.forEach(obs => {
-                mCtx.beginPath();
-                mCtx.arc(obs.x, obs.y, 4, 0, Math.PI * 2);
-                mCtx.fillStyle = "#ef4444";
-                mCtx.shadowColor = "rgba(239, 68, 68, 0.7)";
-                mCtx.shadowBlur = 6;
-                mCtx.fill();
-                mCtx.shadowBlur = 0;
+            // Haces en vivo
+            const rx = px(pose.x), ry = py(pose.y);
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([3, 3]);
+            st.radar.forEach((d, i) => {
+                if (d == null || d > 80) return;
+                const a = pose.a + SENS_ANG[i];
+                ctx.strokeStyle = colorDist(d);
+                ctx.beginPath();
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(rx + Math.sin(a) * d * ESC, ry - Math.cos(a) * d * ESC);
+                ctx.stroke();
             });
+            ctx.setLineDash([]);
 
-            // 3. Dibujar haces de ultrasonido en vivo desde el robot (a -90°, 0° y 90°)
-            const angulosSensores = [-90, 0, 90];
-            angulosSensores.forEach((angRel, i) => {
-                const dist = ultimasLecturasSensores[i] || 50;
-                if (dist > 0 && dist <= 80) {
-                    const angRad = robotPos.angle + (angRel * Math.PI / 180);
-                    const beamX = robotPos.x + Math.sin(angRad) * (dist * escalaPxCm);
-                    const beamY = robotPos.y - Math.cos(angRad) * (dist * escalaPxCm);
+            // Robot
+            ctx.save();
+            ctx.translate(rx, ry);
+            ctx.rotate(pose.a);
+            ctx.beginPath();
+            ctx.arc(0, 0, 9, 0, Math.PI * 2);
+            ctx.fillStyle = '#10b981';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, -12);
+            ctx.stroke();
+            ctx.restore();
 
-                    mCtx.beginPath();
-                    mCtx.moveTo(robotPos.x, robotPos.y);
-                    mCtx.lineTo(beamX, beamY);
-                    mCtx.strokeStyle = dist < 20 ? "rgba(239, 68, 68, 0.6)" : (dist < 40 ? "rgba(245, 158, 11, 0.5)" : "rgba(16, 185, 129, 0.3)");
-                    mCtx.lineWidth = 1.5;
-                    mCtx.setLineDash([3, 3]);
-                    mCtx.stroke();
-                    mCtx.setLineDash([]);
-                }
-            });
+            const area = recorrido * ANCHO_CEPILLO_CM / 1e4;
+            setText($('map-info'), `${(recorrido / 100).toFixed(1)} m · ~${area.toFixed(2)} m² · ${obst.size} obst.`);
+        }
 
-            // 4. Dibujar Robot en su posición actual
-            mCtx.save();
-            mCtx.translate(robotPos.x, robotPos.y);
-            mCtx.rotate(robotPos.angle);
+        $('btn-map-reset').onclick = () => { reiniciarMapa(); log('Mapa reiniciado'); };
+        $('btn-map-centrar').onclick = () => { vista = { x: pose.x, y: pose.y }; redibujar('mapa'); };
 
-            // Chasis
-            mCtx.beginPath();
-            mCtx.arc(0, 0, 11, 0, Math.PI * 2);
-            mCtx.fillStyle = "#10b981";
-            mCtx.shadowColor = "rgba(16, 185, 129, 0.5)";
-            mCtx.shadowBlur = 8;
-            mCtx.fill();
-            mCtx.shadowBlur = 0;
-            mCtx.strokeStyle = "#ffffff";
-            mCtx.lineWidth = 2;
-            mCtx.stroke();
-
-            // Puntero de dirección (Frente)
-            mCtx.beginPath();
-            mCtx.moveTo(0, 2);
-            mCtx.lineTo(0, -14);
-            mCtx.strokeStyle = "#ffffff";
-            mCtx.lineWidth = 2.5;
-            mCtx.lineCap = "round";
-            mCtx.stroke();
-
-            mCtx.restore();
-
-            // Actualizar contador de obstáculos en la interfaz
-            const txt = document.getElementById("cobertura-txt");
-            if (txt) {
-                const area = (trayectoria.length * 0.05).toFixed(1);
-                txt.textContent = `Área limpia: ~${area} m² | Obstáculos: ${obstaculos.length}`;
+        // Se dispara tambien al mostrar una pestaña oculta (tamaño 0 → visible)
+        const ro = new ResizeObserver((entradas) => {
+            for (const { target } of entradas) {
+                const c = ajustarCanvas(target);
+                if (!c) continue;
+                if (target === radarCv) { radar = c; crearFondoRadar(); redibujar('radar'); }
+                else { mapa = c; redibujar('mapa'); }
             }
-        }
-
-        function limpiarMapa() {
-            robotPos = { x: mMap.width / 2, y: mMap.height / 2, angle: 0 };
-            trayectoria = [{ x: robotPos.x, y: robotPos.y }];
-            obstaculos = [];
-            dibujarMapa();
-            log("Mapa de cobertura y obstáculos reiniciados.");
-        }
-
-        function centrarRobot() {
-            robotPos.x = mMap.width / 2;
-            robotPos.y = mMap.height / 2;
-            dibujarMapa();
-        }
+        });
+        ro.observe(radarCv);
+        ro.observe(mapaCv);
 
         // ==========================================
-        //  4. WEBSOCKET, TELEMETRÍA Y CRONÓMETRO
+        //  WEBSOCKET
         // ==========================================
         let ws = null;
-        let conectado = false;
-        let reconexionTimer = null;
-        let missionStart = null;
-        let pingStart = 0;
+        let reconectar = true;
+        let intentos = 0;
+        let timerReconexion = null;
 
-        function toggleConexion() {
-            if (conectado) {
-                if (ws) ws.close();
-            } else {
-                conectarWS();
+        function urlWS() {
+            const h = location.hostname;
+            const local = location.protocol === 'file:' || !h || h === 'localhost' || h === '127.0.0.1';
+            return `ws://${local ? $('ip').value.trim() : location.host}/ws`;
+        }
+
+        function enviar(obj) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(obj));
+                return true;
+            }
+            return false;
+        }
+
+        function setOnline(on) {
+            st.online = on;
+            $('app').classList.toggle('online', on);
+            setText($('btn-con'), on ? 'Desconectar' : 'Conectar');
+            document.querySelectorAll('.sim').forEach((s) => (s.disabled = on));
+            if (!on) {
+                setText($('t-estado'), 'OFFLINE');
+                setText($('t-ping'), '-- ms');
             }
         }
 
-        function conectarWS() {
-            const ip = window.location.hostname === "127.0.0.1" || window.location.hostname === ""
-                ? document.getElementById("ip-esp32").value
-                : window.location.hostname;
-
-            const url = `ws://${ip}/ws`;
-            log("Conectando a " + url + "...");
-
+        function conectar() {
+            if (ws) return;
+            clearTimeout(timerReconexion);
+            const url = urlWS();
+            if (intentos === 0) log('Conectando a ' + url);
             try {
                 ws = new WebSocket(url);
-
-                ws.onopen = () => {
-                    conectado = true;
-                    document.getElementById("btn-conectar").textContent = "Desconectar";
-                    document.getElementById("btn-conectar").style.background = "var(--danger-color)";
-                    document.getElementById("brand-ind").classList.add("online");
-                    document.getElementById("tel-estado").textContent = "ONLINE";
-                    log("WebSocket Conectado exitosamente.");
-                    if (reconexionTimer) clearInterval(reconexionTimer);
-
-                    // Medir ping periódico
-                    medirPing();
-                };
-
-                ws.onmessage = (evt) => {
-                    const ahora = Date.now();
-                    if (pingStart > 0) {
-                        const ping = ahora - pingStart;
-                        document.getElementById("tel-ping").textContent = ping + " ms";
-                        pingStart = 0;
-                    }
-
-                    try {
-                        const data = JSON.parse(evt.data);
-                        // Telemetría de radar: {"radar":[izq, ctr, der]}
-                        if (data.radar && data.radar.length === 3) {
-                            dibujarRadar(data.radar[0], data.radar[1], data.radar[2]);
-                            proyectarObstaculos(data.radar[0], data.radar[1], data.radar[2]);
-                            document.getElementById("sim-izq").value = data.radar[0];
-                            document.getElementById("sim-ctr").value = data.radar[1];
-                            document.getElementById("sim-der").value = data.radar[2];
-                            actualizarValoresSliders();
-                        }
-                        // Telemetría de batería: {"bat": 12.2, "pct": 88}
-                        if (data.bat) {
-                            document.getElementById("tel-bateria").textContent = `${data.bat}V (${data.pct || 80}%)`;
-                        }
-                        // Estado: {"estado": "CLEANING"}
-                        if (data.estado) {
-                            document.getElementById("tel-estado").textContent = data.estado;
-                        }
-                    } catch (e) { }
-                };
-
-                ws.onclose = () => {
-                    conectado = false;
-                    document.getElementById("btn-conectar").textContent = "Conectar";
-                    document.getElementById("btn-conectar").style.background = "var(--accent-color)";
-                    document.getElementById("brand-ind").classList.remove("online");
-                    document.getElementById("tel-estado").textContent = "OFFLINE";
-                    document.getElementById("tel-ping").textContent = "-- ms";
-                    log("WebSocket Desconectado.");
-                };
             } catch (e) {
-                log("Error al iniciar WebSocket.");
-            }
-        }
-
-        function medirPing() {
-            if (conectado && ws && ws.readyState === WebSocket.OPEN) {
-                pingStart = Date.now();
-                ws.send(JSON.stringify({ cmd: "PING" }));
-                setTimeout(medirPing, 4000);
-            }
-        }
-
-        function enviarJSON(datos) {
-            log("SEND: " + JSON.stringify(datos));
-            if (conectado && ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(datos));
-            }
-        }
-
-        function log(texto) {
-            const consoleEl = document.getElementById("console");
-            const entry = document.createElement("div");
-            entry.className = "log-entry";
-            const tiempo = new Date().toLocaleTimeString().split(" ")[0];
-            entry.textContent = `[${tiempo}] ${texto}`;
-            consoleEl.appendChild(entry);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-        }
-
-        // Cronómetro de Misión
-        setInterval(() => {
-            if (missionStart) {
-                const diff = Math.floor((Date.now() - missionStart) / 1000);
-                const m = String(Math.floor(diff / 60)).padStart(2, '0');
-                const s = String(diff % 60).padStart(2, '0');
-                document.getElementById("tel-tiempo").textContent = `${m}:${s}`;
-            }
-        }, 1000);
-
-        // ==========================================
-        //  5. ACCIONES DE CONTROL Y PARADA DE EMERGENCIA
-        // ==========================================
-        function paradaEmergencia() {
-            velLineal = 0;
-            velAngular = 0;
-            succionEstado = false;
-            cepilloEstado = false;
-
-            document.getElementById("btn-succion").textContent = "OFF";
-            document.getElementById("btn-succion").className = "btn-toggle";
-            document.getElementById("btn-cepillo").textContent = "OFF";
-            document.getElementById("btn-cepillo").className = "btn-toggle";
-
-            setModo('MANUAL');
-            enviarJSON({ cmd: "EMERGENCY_STOP" });
-            log("¡PARADA DE EMERGENCIA ACTIVADA!");
-        }
-
-        let succionEstado = false;
-        let cepilloEstado = false;
-        let potenciaSuccion = 75;
-
-        function setPotenciaSuccion(val) {
-            potenciaSuccion = val;
-            document.querySelectorAll('.power-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            if (succionEstado) {
-                enviarJSON({ cmd: "SUCCION", val: potenciaSuccion });
-            }
-            log(`Potencia de succión: ${val}%`);
-        }
-
-        function toggleSuccion() {
-            succionEstado = !succionEstado;
-            const btn = document.getElementById("btn-succion");
-            btn.textContent = succionEstado ? `ON (${potenciaSuccion}%)` : "OFF";
-            btn.className = succionEstado ? "btn-toggle on" : "btn-toggle";
-            enviarJSON({ cmd: "SUCCION", val: succionEstado ? potenciaSuccion : 0 });
-
-            if (succionEstado && !missionStart) missionStart = Date.now();
-        }
-
-        function toggleCepillo() {
-            cepilloEstado = !cepilloEstado;
-            const btn = document.getElementById("btn-cepillo");
-            btn.textContent = cepilloEstado ? "ON" : "OFF";
-            btn.className = cepilloEstado ? "btn-toggle on" : "btn-toggle";
-            enviarJSON({ cmd: "CEPILLO", val: cepilloEstado ? 1 : 0 });
-        }
-
-        function setModo(nuevoModo) {
-            document.querySelectorAll('.btn-modo').forEach(b => b.classList.remove('activo'));
-            const mapa = {
-                'MANUAL': 'modo-manual',
-                'AUTO': 'modo-auto',
-                'PAREDES': 'modo-bordes',
-                'ESPIRAL': 'modo-espiral'
-            };
-            if (mapa[nuevoModo]) {
-                document.getElementById(mapa[nuevoModo]).classList.add('activo');
-            }
-            enviarJSON({ cmd: "MODO", val: nuevoModo });
-            if (nuevoModo !== 'MANUAL' && !missionStart) {
-                missionStart = Date.now();
-            }
-        }
-
-        // ==========================================
-        //  6. JOYSTICKS VIRTUALES (NIPPLEJS)
-        // ==========================================
-        let velLineal = 0;
-        let velAngular = 0;
-        let ultimoEnvio = 0;
-
-        const joyLin = nipplejs.create({
-            zone: document.getElementById('joy-lineal'),
-            mode: 'static', position: { left: '50%', top: '50%' },
-            color: '#10b981', size: 95, lockY: true
-        });
-
-        const joyAng = nipplejs.create({
-            zone: document.getElementById('joy-angular'),
-            mode: 'static', position: { left: '50%', top: '50%' },
-            color: '#0078d4', size: 95, lockX: true
-        });
-
-        function procesarEnvioDrive() {
-            const ahora = Date.now();
-            if (ahora - ultimoEnvio < 80) return;
-            enviarJSON({ cmd: "DRIVE", lin: velLineal, ang: velAngular });
-            ultimoEnvio = ahora;
-
-            // Simular avance leve en el mapa
-            simularAvanceMapa(velLineal, velAngular);
-        }
-
-        joyLin.on('move', (evt, data) => {
-            if (data && data.vector) {
-                velLineal = Math.round(data.vector.y * 100);
-                procesarEnvioDrive();
-            }
-        });
-        joyLin.on('end', () => {
-            velLineal = 0;
-            enviarJSON({ cmd: "DRIVE", lin: 0, ang: velAngular });
-        });
-
-        joyAng.on('move', (evt, data) => {
-            if (data && data.vector) {
-                velAngular = Math.round(data.vector.x * 100);
-                procesarEnvioDrive();
-            }
-        });
-        joyAng.on('end', () => {
-            velAngular = 0;
-            enviarJSON({ cmd: "DRIVE", lin: velLineal, ang: 0 });
-        });
-
-        function simularAvanceMapa(lin, ang) {
-            robotPos.angle += (ang * 0.0008);
-            const dist = lin * 0.04;
-            robotPos.x += Math.sin(robotPos.angle) * dist;
-            robotPos.y -= Math.cos(robotPos.angle) * dist;
-
-            // Guardar trayectoria
-            const ultimo = trayectoria[trayectoria.length - 1];
-            if (Math.hypot(ultimo.x - robotPos.x, ultimo.y - robotPos.y) > 6) {
-                trayectoria.push({ x: robotPos.x, y: robotPos.y });
-                if (document.getElementById('tab-mapa').classList.contains('active')) {
-                    dibujarMapa();
-                }
-            }
-        }
-
-        // ==========================================
-        //  7. CONTROLES POR TECLADO (WASD / ESPACIO)
-        // ==========================================
-        const teclasPresionadas = {};
-        window.addEventListener("keydown", (e) => {
-            if (["w", "a", "s", "d", " ", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key.toLowerCase())) {
-                teclasPresionadas[e.key.toLowerCase()] = true;
-                procesarTeclado();
-            }
-        });
-
-        window.addEventListener("keyup", (e) => {
-            const key = e.key.toLowerCase();
-            if (teclasPresionadas[key]) {
-                delete teclasPresionadas[key];
-                procesarTeclado();
-            }
-        });
-
-        function procesarTeclado() {
-            if (teclasPresionadas[" "]) {
-                paradaEmergencia();
+                log('URL inválida: ' + url);
                 return;
             }
-
-            let lin = 0;
-            let ang = 0;
-
-            if (teclasPresionadas["w"] || teclasPresionadas["arrowup"]) lin += 75;
-            if (teclasPresionadas["s"] || teclasPresionadas["arrowdown"]) lin -= 75;
-            if (teclasPresionadas["a"] || teclasPresionadas["arrowleft"]) ang -= 75;
-            if (teclasPresionadas["d"] || teclasPresionadas["arrowright"]) ang += 75;
-
-            velLineal = lin;
-            velAngular = ang;
-            procesarEnvioDrive();
+            ws.onopen = () => {
+                intentos = 0;
+                setOnline(true);
+                log('Conectado');
+                ping();
+            };
+            ws.onmessage = (e) => {
+                let d;
+                try { d = JSON.parse(e.data); } catch { return; }
+                if ('pong' in d) setText($('t-ping'), Math.round(performance.now() - d.pong) + ' ms');
+                else telemetria(d);
+            };
+            ws.onclose = () => {
+                ws = null;
+                if (st.online) log('Desconectado');
+                setOnline(false);
+                if (reconectar) {
+                    timerReconexion = setTimeout(conectar, Math.min(5000, 500 * 2 ** intentos++));
+                }
+            };
         }
 
-        // ==========================================
-        //  8. SIMULADOR LOCAL CON SLIDERS
-        // ==========================================
-        function actualizarValoresSliders() {
-            document.getElementById("val-izq").textContent = document.getElementById("sim-izq").value + " cm";
-            document.getElementById("val-ctr").textContent = document.getElementById("sim-ctr").value + " cm";
-            document.getElementById("val-der").textContent = document.getElementById("sim-der").value + " cm";
-        }
-
-        function actualizarSimulacion() {
-            const izq = parseFloat(document.getElementById("sim-izq").value);
-            const ctr = parseFloat(document.getElementById("sim-ctr").value);
-            const der = parseFloat(document.getElementById("sim-der").value);
-
-            actualizarValoresSliders();
-            dibujarRadar(izq, ctr, der);
-            proyectarObstaculos(izq, ctr, der);
-        }
-
-        // Inicialización y adaptación a cambios de orientación
-        window.addEventListener("load", () => {
-            actualizarSimulacion();
-            dibujarMapa();
-            conectarWS();
-        });
-
-        // Al girar el celular entre vertical y horizontal (o cambiar tamaño de ventana)
-        window.addEventListener("resize", () => {
-            actualizarSimulacion();
-            if (document.getElementById('tab-mapa').classList.contains('active')) {
-                dibujarMapa();
+        $('btn-con').onclick = () => {
+            if (ws) {
+                reconectar = false;
+                ws.close();
+            } else {
+                reconectar = true;
+                intentos = 0;
+                conectar();
             }
+        };
+
+        function ping() { enviar({ cmd: 'PING', t: performance.now() }); }
+        setInterval(ping, 3000);
+
+        function telemetria(d) {
+            if (Array.isArray(d.radar)) {
+                st.radar = d.radar.map((v) => (v >= 0 ? v : null));
+                st.radar.forEach((v, i) => {
+                    if (v == null) return;
+                    document.querySelector(`.sim[data-i="${i}"]`).value = v;
+                    setText($('v-sim-' + i), Math.round(v) + ' cm');
+                });
+                redibujar('radar');
+                proyectarObstaculos();
+            }
+            if (d.estado) { st.estado = d.estado; setText($('t-estado'), d.estado); }
+            if (d.modo) marcarModo(d.modo);
+            if (d.suc != null) actuadores.suc.mostrar(d.suc, d.rpm);
+            if (d.cep != null) actuadores.cep.mostrar(d.cep);
+            if (d.mis != null) {
+                const m = String(Math.floor(d.mis / 60)).padStart(2, '0');
+                setText($('t-mis'), `${m}:${String(d.mis % 60).padStart(2, '0')}`);
+            }
+            if (d.umbral != null) sincronizarCfg('umbral', d.umbral);
+            if (d.vel != null) sincronizarCfg('vel', d.vel);
+        }
+
+        // ==========================================
+        //  MODOS Y PARADA DE EMERGENCIA
+        // ==========================================
+        function marcarModo(m) {
+            if (st.modo === m) return;
+            st.modo = m;
+            setText($('t-modo'), m);
+            document.querySelectorAll('#modos button').forEach((b) => b.classList.toggle('active', b.dataset.modo === m));
+        }
+
+        function setModo(m) {
+            marcarModo(m);
+            enviar({ cmd: 'MODO', val: m });
+            log('Modo ' + m);
+        }
+
+        $('modos').onclick = (e) => { if (e.target.dataset.modo) setModo(e.target.dataset.modo); };
+
+        function paradaEmergencia() {
+            enviar({ cmd: 'STOP' });
+            mando.reset();
+            marcarModo('MANUAL');
+            actuadores.suc.mostrar(0);
+            actuadores.cep.mostrar(0);
+            log('¡PARADA DE EMERGENCIA!');
+        }
+        $('estop').onclick = paradaEmergencia;
+
+        // ==========================================
+        //  ACTUADORES (succion y cepillo, misma logica)
+        // ==========================================
+        class Actuador {
+            constructor(el) {
+                this.cmd = el.dataset.cmd;
+                this.btn = el.querySelector('.toggle');
+                this.range = el.querySelector('input');
+                this.out = el.querySelector('output');
+                this.sub = el.querySelector('.sub');
+                this.subBase = this.sub.textContent;
+                this.presets = [...el.querySelectorAll('.presets button')];
+                this.on = false;
+
+                this.btn.onclick = () => this.aplicar(this.on ? 0 : +this.range.value);
+                this.range.oninput = () => this.marcarPotencia(+this.range.value);
+                this.range.onchange = () => { if (this.on) this.aplicar(+this.range.value); };
+                this.presets.forEach((b) => (b.onclick = () => {
+                    this.marcarPotencia(+b.dataset.v);
+                    if (this.on) this.aplicar(+b.dataset.v);
+                }));
+                this.marcarPotencia(+this.range.value);
+            }
+
+            marcarPotencia(v) {
+                this.range.value = v;
+                setText(this.out, v + '%');
+                this.presets.forEach((b) => b.classList.toggle('active', +b.dataset.v === v));
+            }
+
+            aplicar(v) {
+                enviar({ cmd: this.cmd, val: v });
+                this.mostrar(v);
+            }
+
+            mostrar(v, rpm) {
+                this.on = v > 0;
+                setText(this.btn, this.on ? `ON ${v}%` : 'OFF');
+                this.btn.classList.toggle('on', this.on);
+                if (this.on && document.activeElement !== this.range && +this.range.value !== v) this.marcarPotencia(v);
+                setText(this.sub, rpm ? `${this.subBase} · ${rpm} RPM` : this.subBase);
+            }
+        }
+
+        const actuadores = {};
+        document.querySelectorAll('.act').forEach((el) => (actuadores[el.dataset.key] = new Actuador(el)));
+
+        // ==========================================
+        //  MANDO: joysticks tactiles + teclado
+        // ==========================================
+        class Stick {
+            constructor(el, eje, onCambio) {
+                this.el = el;
+                this.eje = eje;
+                this.onCambio = onCambio;
+                this.v = 0;
+                this.id = null;
+                this.knob = document.createElement('div');
+                this.knob.className = 'knob';
+                el.append(this.knob);
+
+                el.addEventListener('pointerdown', (e) => {
+                    this.id = e.pointerId;
+                    el.setPointerCapture(e.pointerId);
+                    el.classList.add('drag');
+                    this.mover(e);
+                });
+                el.addEventListener('pointermove', (e) => { if (e.pointerId === this.id) this.mover(e); });
+                const fin = (e) => {
+                    if (e.pointerId !== this.id) return;
+                    this.id = null;
+                    el.classList.remove('drag');
+                    this.posicionar(0, 0);
+                };
+                el.addEventListener('pointerup', fin);
+                el.addEventListener('pointercancel', fin);
+            }
+
+            mover(e) {
+                const r = this.el.getBoundingClientRect();
+                const rad = r.width / 2 - 23;
+                const d = this.eje === 'y'
+                    ? r.top + r.height / 2 - e.clientY
+                    : e.clientX - r.left - r.width / 2;
+                const px = Math.max(-rad, Math.min(rad, d));
+                this.posicionar(px, Math.round(px / rad * 100));
+            }
+
+            posicionar(px, v) {
+                this.knob.style.transform = this.eje === 'y'
+                    ? `translate(-50%, calc(-50% - ${px}px))`
+                    : `translate(calc(-50% + ${px}px), -50%)`;
+                if (Math.abs(v) < 8) v = 0;               // zona muerta
+                if (v !== this.v) { this.v = v; this.onCambio(); }
+            }
+        }
+
+        const mando = {
+            teclas: new Set(),
+            ultimoEnvio: 0,
+            enMovimiento: false,
+            lin() {
+                const k = this.teclas;
+                return stickLin.v || ((k.has('w') || k.has('arrowup')) - (k.has('s') || k.has('arrowdown'))) * 75;
+            },
+            ang() {
+                const k = this.teclas;
+                return stickAng.v || ((k.has('d') || k.has('arrowright')) - (k.has('a') || k.has('arrowleft'))) * 75;
+            },
+            cambio() {
+                const lin = this.lin(), ang = this.ang();
+                // Tocar el mando toma el control manual
+                if ((lin || ang) && st.modo !== 'MANUAL') setModo('MANUAL');
+                // Limitar a 20 envios/s; el soltar (0,0) se envia siempre
+                if (performance.now() - this.ultimoEnvio > 50 || (!lin && !ang)) this.enviar();
+            },
+            enviar() {
+                const lin = this.lin(), ang = this.ang();
+                enviar({ cmd: 'DRIVE', lin, ang });
+                this.ultimoEnvio = performance.now();
+                this.enMovimiento = !!(lin || ang);
+            },
+            reset() {
+                this.teclas.clear();
+                stickLin.posicionar(0, 0);
+                stickAng.posicionar(0, 0);
+            },
+        };
+
+        const stickLin = new Stick($('stick-lin'), 'y', () => mando.cambio());
+        const stickAng = new Stick($('stick-ang'), 'x', () => mando.cambio());
+
+        // Lazo a 10 Hz: refresca DRIVE (el firmware frena si no recibe nada en 400 ms)
+        // y actualiza la pose estimada del mapa
+        let tPrevio = performance.now();
+        setInterval(() => {
+            const ahora = performance.now();
+            if (mando.enMovimiento || mando.lin() || mando.ang()) mando.enviar();
+            integrarPose((ahora - tPrevio) / 1000);
+            tPrevio = ahora;
+        }, 100);
+
+        const TECLAS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright']);
+        addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+            const k = e.key.toLowerCase();
+            if (k === ' ') { e.preventDefault(); paradaEmergencia(); return; }
+            if (!TECLAS.has(k) || e.repeat) return;
+            e.preventDefault();
+            mando.teclas.add(k);
+            mando.cambio();
         });
+        addEventListener('keyup', (e) => {
+            if (mando.teclas.delete(e.key.toLowerCase())) mando.cambio();
+        });
+        addEventListener('blur', () => { if (mando.teclas.size) { mando.teclas.clear(); mando.cambio(); } });
+
+        // ==========================================
+        //  PESTAÑAS
+        // ==========================================
+        $('tabs').onclick = (e) => {
+            const tab = e.target.dataset.tab;
+            if (!tab) return;
+            document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('active', b === e.target));
+            document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === 'tab-' + tab));
+            redibujar('mapa');
+        };
+
+        // ==========================================
+        //  AJUSTES Y SIMULADOR
+        // ==========================================
+        function sincronizarCfg(clave, v) {
+            st[clave] = v;
+            const inp = $('cfg-' + clave);
+            if (document.activeElement === inp) return;
+            inp.value = v;
+            setText($('v-' + clave), v + inp.dataset.unit);
+        }
+
+        ['umbral', 'vel'].forEach((clave) => {
+            const inp = $('cfg-' + clave);
+            inp.oninput = () => {
+                st[clave] = +inp.value;
+                setText($('v-' + clave), inp.value + inp.dataset.unit);
+                redibujar('radar');
+            };
+            inp.onchange = () => enviar({ cmd: 'CONFIG', [clave]: +inp.value });
+        });
+
+        document.querySelectorAll('.sim').forEach((s) => {
+            s.oninput = () => {
+                st.radar[+s.dataset.i] = +s.value;
+                setText($('v-sim-' + s.dataset.i), s.value + ' cm');
+                redibujar('radar');
+                proyectarObstaculos();
+            };
+        });
+
+        // ==========================================
+        //  INICIO
+        // ==========================================
+        log('Interfaz lista');
+        conectar();
     </script>
 </body>
 

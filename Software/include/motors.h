@@ -4,28 +4,23 @@
 #include <Arduino.h>
 #include "config.h"
 /*
-    motors.h - Control TB6612FNG 
+    motors.h - Control TB6612FNG
     Motor A = Motor Izquierdo (J3)
     Motor B = Motor Derecho   (J4)
 */
-
-//Canales LEDC (PWM por hardware del ESP32)
-#define PWM_CH_MOTOR_A 0
-#define PWM_CH_MOTOR_B 1
-#define PWM_FREQ_HZ    20000    // 20kHz - inaudible para el humano
-#define PWM_RESOLUTION 8        // 8 bits: duty cycle 0-255
 
 void motors_init();
 void motors_standby();
 void motors_wake();
 
-// Control individual
-void motor_izq(int8_t velocidad); // -100 a 100
-void motor_der(int8_t velocidad); // -100 a 100
-
+// Control individual: -100 (atras) a 100 (adelante)
+void motor_izq(int velocidad);
+void motor_der(int velocidad);
 
 // Control combinado (diferencial)
-void motors_drive(int8_t lineal, int8_t angular); // lineal: adelante/atras, angular: giro
+// lineal:  -100 = atras,          100 = adelante
+// angular: -100 = giro izquierda, 100 = giro derecha
+void motors_drive(int lineal, int angular);
 
-void motors_stop();
-void motors_brake();
+void motors_stop();    // rueda libre
+void motors_brake();   // freno activo

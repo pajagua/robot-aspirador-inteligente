@@ -1,21 +1,18 @@
-// para control de motor de succion
+// para control del motor de succion
 
 #pragma once
 #include <Arduino.h>
 #include "config.h"
 
 /*
-    suction.h - Motor de succion con el MOSFET
-    Control PWM: duty 0-100%
-    Protegido con diodo flyback SS14
+    suction.h - Motor de succion BLDC de 4 pines (V+, GND, PWM, FG)
+    El driver esta integrado en la placa del motor: el ESP32 solo genera
+    la señal PWM de velocidad (y opcionalmente lee el tacometro FG).
 */
 
-#define PWM_CH_SUCCION 2
-#define PWM_FREQ_HZ_SUCCION 20000 //25kHz, inaudible para humanos
-
 void succion_init();
-void succion_on(uint8_t porcentaje); // potencia 0-100%
-void succion_on(); // potencia al maximo (100%)
+void succion_set(uint8_t porcentaje); // potencia 0-100%
+void succion_on();                    // potencia al maximo (100%)
 void succion_off();
-uint8_t succion_get(); // devuelve potencia actual (0-100%)
-
+uint8_t succion_get();                // potencia actual (0-100%)
+uint16_t succion_rpm();               // RPM medidas por FG (0 si no hay FG)
