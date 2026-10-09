@@ -8,14 +8,14 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/include",
-                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/src",
-                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ESPAsyncWebServer/src",
+                "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/include",
+                "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/src",
+                "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ESPAsyncWebServer/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
-                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ArduinoJson/src",
-                "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/AsyncTCP/src",
+                "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ArduinoJson/src",
+                "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/AsyncTCP/src",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                 "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -250,14 +250,14 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/include",
-                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/src",
-                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ESPAsyncWebServer/src",
+                    "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/include",
+                    "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/src",
+                    "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ESPAsyncWebServer/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
-                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ArduinoJson/src",
-                    "C:/Users/tikip/Desktop/P4 Rumba/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/AsyncTCP/src",
+                    "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/ArduinoJson/src",
+                    "C:/Users/tikip/Desktop/FIUNA/2026_2/P4/robot-aspirador-inteligente-main/robot-aspirador-inteligente/Software/.pio/libdeps/esp32-s3-devkitc-1/AsyncTCP/src",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/newlib/platform_include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include",
                     "C:/Users/tikip/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32s3/include/freertos/include/esp_additions/freertos",
@@ -491,7 +491,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=60119",
+                "PLATFORMIO=60200",
                 "ARDUINO_ESP32S3_DEV",
                 "ARDUINO_USB_MODE=1",
                 "ARDUINO_RUNNING_CORE=1",
